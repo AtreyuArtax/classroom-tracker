@@ -3,7 +3,8 @@
  *
  * Authentic Ontario Curriculum & Success Criteria competency mapping.
  * Translates raw gradebook assessment titles and descriptions into rich, professional
- * pedagogical skill phrases based on Ministry of Education curriculum strands.
+ * pedagogical skill phrases, concise noun-phrase short topics, and concept-matched tools
+ * based on Ministry of Education curriculum strands.
  *
  * Secondary courses are modularized in src/data/comments/secondary/ for easy maintainability.
  */
@@ -100,7 +101,7 @@ export function getCourseCompetencies(rawCourseCode) {
  *
  * @param {Object|string} assessment  Either { name, description, unitName, expectations } object or string title
  * @param {string} rawCourseCode
- * @returns {Array<{ label: string, phrase: string, score: number }>}
+ * @returns {Array<{ label: string, phrase: string, phraseVariants?: string[], shortTopics?: string[], tools?: string[], score: number }>}
  */
 export function extractCompetenciesFromAssessment(assessment, rawCourseCode) {
   const title = typeof assessment === 'string' ? assessment : (assessment?.name || assessment?.title || '')
@@ -126,6 +127,8 @@ export function extractCompetenciesFromAssessment(assessment, rawCourseCode) {
         label: comp.label,
         phrase: comp.phrase,
         phraseVariants: comp.phraseVariants,
+        shortTopics: comp.shortTopics || [],
+        tools: comp.tools || [],
         score
       })
     }
@@ -258,6 +261,97 @@ export function condenseCurriculumExpectation(rawInput, rawCourseCode = '') {
 }
 
 /**
+ * Selects a gerund competency phrase variant by variantIndex.
+ * Variant 0 always returns the primary `comp.phrase`.
+ */
+export function pickCompetencyPhrase(comp, variantIndex = 0) {
+  if (!comp) return ''
+  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
+  if (idx > 0 && Array.isArray(comp.phraseVariants) && comp.phraseVariants.length > 0) {
+    return comp.phraseVariants[idx % comp.phraseVariants.length] || comp.phrase
+  }
+  return comp.phrase || ''
+}
+
+/**
+ * Selects a concise lowercase noun-phrase short topic for preposition contexts (`with ...`, `in ...`).
+ */
+export function pickCompetencyShortTopic(comp, variantIndex = 0) {
+  if (!comp) return ''
+  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
+  if (Array.isArray(comp.shortTopics) && comp.shortTopics.length > 0) {
+    return comp.shortTopics[idx % comp.shortTopics.length] || comp.phrase
+  }
+  return comp.phrase || ''
+}
+
+/**
+ * Selects a concept-matched study tool/strategy noun phrase from a competency.
+ */
+export function pickCompetencyTool(comp, variantIndex = 0) {
+  if (!comp) return ''
+  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
+  if (Array.isArray(comp.tools) && comp.tools.length > 0) {
+    return comp.tools[idx % comp.tools.length] || ''
+  }
+  return ''
+}
+
+function matchesCompetencyDirectly(comp, trimmed) {
+  if (!comp || !trimmed) return false
+  return comp.phrase === trimmed ||
+    comp.label === trimmed ||
+    (Array.isArray(comp.phraseVariants) && comp.phraseVariants.includes(trimmed)) ||
+    (Array.isArray(comp.shortTopics) && comp.shortTopics.includes(trimmed))
+}
+
+/**
+ * Resolves the full competency object for a task title, competency phrase, label, or description.
+ */
+export function resolveCompetencyObject(rawInput, rawCourseCode = '', rawDescription = '') {
+  if (!rawInput) return null
+  const trimmed = String(rawInput).trim()
+  if (!trimmed) return null
+
+  const competencies = getCourseCompetencies(rawCourseCode)
+  const existingComp = competencies.find(c => matchesCompetencyDirectly(c, trimmed))
+  if (existingComp) return existingComp
+
+  for (const list of Object.values(COURSE_COMPETENCIES)) {
+    const directMatch = list.find(c => matchesCompetencyDirectly(c, trimmed))
+    if (directMatch) return directMatch
+  }
+
+  for (const list of Object.values(DEPARTMENT_FALLBACKS)) {
+    const fallbackMatch = list.find(c => matchesCompetencyDirectly(c, trimmed))
+    if (fallbackMatch) return fallbackMatch
+  }
+
+  const matches = extractCompetenciesFromAssessment(
+    { name: trimmed, description: rawDescription },
+    rawCourseCode
+  )
+  if (matches.length > 0) {
+    return competencies.find(c => c.label === matches[0].label) || matches[0]
+  }
+
+  return null
+}
+
+function stripAdministrativeWrappers(rawTitle) {
+  let fallback = String(rawTitle || '').trim()
+    .replace(/^(unit|ch\.|chapter|module|section|strand)\s*[a-z0-9]+(?:\s*[\s:–—-]\s*|\s+)/i, '')
+    .replace(/\s+(unit\s+test|test|quiz|exam|inquiry\s+lab|lab\s+report|lab|assignment|worksheet|problem\s+set|evaluation|checkpoint|submission|dropbox|hand-in|handin|turn-in|turnin|activity|gizmo|packet|sheet)\b/gi, '')
+    .replace(/[\s:–—-]+$/, '')
+    .trim()
+
+  if (!fallback || /^(unit|ch\.|chapter|module|section|strand)\s*[a-z0-9]*$/i.test(fallback) || /^(test|quiz|lab|assignment|eval|task|exam|submission|dropbox|hand-in|activity|gizmo|worksheet)$/i.test(fallback)) {
+    return ''
+  }
+  return fallback
+}
+
+/**
  * Intelligently translates a raw assessment title (and optional description)
  * into an authentic curriculum competency phrase based on course code.
  *
@@ -265,52 +359,60 @@ export function condenseCurriculumExpectation(rawInput, rawCourseCode = '') {
  * Uses word-boundary matching and checks descriptions when available.
  * If no keywords match, falls back to the cleaned task title.
  */
-function pickCompetencyPhrase(comp, variantIndex = 0) {
-  if (!comp) return ''
-  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
-  if (idx > 0 && Array.isArray(comp.phraseVariants) && comp.phraseVariants.length > 0) {
-    return comp.phraseVariants[idx % comp.phraseVariants.length] || comp.phrase
-  }
-  return comp.phrase
-}
-
 export function mapAssessmentToCompetency(rawTitle, rawCourseCode, rawDescription = '', variantIndex = 0) {
   if (!rawTitle) return ''
   const trimmed = String(rawTitle).trim()
   if (!trimmed) return ''
 
-  // 1. Direct match check: did the user already pick a competency phrase or label?
-  const competencies = getCourseCompetencies(rawCourseCode)
-  const existingComp = competencies.find(c => c.phrase === trimmed || c.label === trimmed || (Array.isArray(c.phraseVariants) && c.phraseVariants.includes(trimmed)))
-  if (existingComp) return pickCompetencyPhrase(existingComp, variantIndex)
-
-  // Also check if trimmed is already a known competency phrase across all courses
-  for (const list of Object.values(COURSE_COMPETENCIES)) {
-    const directMatch = list.find(c => c.phrase === trimmed || c.label === trimmed || (Array.isArray(c.phraseVariants) && c.phraseVariants.includes(trimmed)))
-    if (directMatch) return pickCompetencyPhrase(directMatch, variantIndex)
+  const comp = resolveCompetencyObject(trimmed, rawCourseCode, rawDescription)
+  if (comp) {
+    return pickCompetencyPhrase(comp, variantIndex)
   }
 
-  // 2. Keyword match with word-boundaries across title and description
-  const matches = extractCompetenciesFromAssessment(
-    { name: trimmed, description: rawDescription },
-    rawCourseCode
-  )
+  return stripAdministrativeWrappers(trimmed)
+}
 
-  if (matches.length > 0) {
-    return pickCompetencyPhrase(matches[0], variantIndex)
+/**
+ * Maps a raw assessment title or competency phrase to a concise lowercase noun-phrase shortTopic.
+ */
+export function mapAssessmentToShortTopic(rawTitle, rawCourseCode, rawDescription = '', variantIndex = 0) {
+  if (!rawTitle) return ''
+  const trimmed = String(rawTitle).trim()
+  if (!trimmed) return ''
+
+  const comp = resolveCompetencyObject(trimmed, rawCourseCode, rawDescription)
+  if (comp) {
+    return pickCompetencyShortTopic(comp, variantIndex)
   }
 
-  // 3. Fallback: Strip common evaluation & administrative wrappers ("Unit 1 - ", "Test", "Quiz", "Lab", "Submission")
-  let fallback = trimmed
-    .replace(/^(unit|ch\.|chapter|module|section|strand)\s*[a-z0-9]+(?:\s*[\s:–—-]\s*|\s+)/i, '')
-    .replace(/\s+(unit\s+test|test|quiz|exam|inquiry\s+lab|lab\s+report|lab|assignment|worksheet|problem\s+set|evaluation|checkpoint|submission|dropbox|hand-in|handin|turn-in|turnin|activity|gizmo|packet|sheet)\b/gi, '')
-    .replace(/[\s:–—-]+$/, '')
-    .trim()
+  return stripAdministrativeWrappers(trimmed)
+}
 
-  // Guard against generic remnants ("Unit 1", "Test", "Submission", or empty)
-  if (!fallback || /^(unit|ch\.|chapter|module|section|strand)\s*[a-z0-9]*$/i.test(fallback) || /^(test|quiz|lab|assignment|eval|task|exam|submission|dropbox|hand-in|activity|gizmo|worksheet)$/i.test(fallback)) {
-    return ''
+/**
+ * Maps a raw assessment title or competency phrase to a concept-matched study tool/strategy.
+ * Falls back to department-appropriate study strategies when no specific competency matches.
+ */
+export function mapAssessmentToTool(rawTitle, rawCourseCode = '', rawDescription = '', variantIndex = 0) {
+  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
+  if (rawTitle) {
+    const comp = resolveCompetencyObject(String(rawTitle).trim(), rawCourseCode, rawDescription)
+    if (comp) {
+      const tool = pickCompetencyTool(comp, idx)
+      if (tool) return tool
+    }
   }
 
-  return fallback
+  const code = normalizeCourseCode(rawCourseCode)
+  let fallbackComps = DEPARTMENT_FALLBACKS.general || []
+  if (code.startsWith('S')) {
+    fallbackComps = DEPARTMENT_FALLBACKS.science || []
+  } else if (code.startsWith('M')) {
+    fallbackComps = DEPARTMENT_FALLBACKS.math || []
+  }
+
+  const toolPool = fallbackComps.flatMap(c => Array.isArray(c.tools) ? c.tools : []).filter(Boolean)
+  if (toolPool.length > 0) {
+    return toolPool[idx % toolPool.length]
+  }
+  return 'a structured revision checklist'
 }

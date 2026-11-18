@@ -91,6 +91,25 @@
                 {{ llmState.hasChromeNano ? 'Available' : 'Unavailable (Board Policy)' }}
               </span>
             </div>
+            <div v-if="llmState.deviceMemoryGB" class="cllm-modal__hw-item">
+              <span class="cllm-modal__hw-label">Device RAM:</span>
+              <span class="cllm-modal__hw-badge cllm-modal__hw-badge--muted">
+                {{ llmState.deviceMemoryGB >= 8 ? '8+ GB' : `${llmState.deviceMemoryGB} GB` }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Auto-Suggestion & Quick Pick Guide -->
+          <div class="cllm-modal__guide-card">
+            <div v-if="llmState.recommendedModelKey" class="cllm-modal__guide-rec">
+              <span class="cllm-modal__guide-pill">★ Suggested for Your Computer</span>
+              <span class="cllm-modal__guide-reason">{{ llmState.recommendationReason }}</span>
+            </div>
+            <div class="cllm-modal__guide-tips">
+              <span><strong>Qwen 2.5 (1.5B):</strong> Best Ontario prose &amp; strictest 400-char / Canadian spelling control.</span>
+              <span><strong>Gemini Nano:</strong> 0 MB download &amp; instant startup (better phrasing than 0.5B).</span>
+              <span><strong>Qwen 2.5 (0.5B):</strong> Lightest (~350 MB) for older or 4 GB school laptops.</span>
+            </div>
           </div>
 
           <!-- Loading / Progress State -->
@@ -132,6 +151,7 @@
                 <div class="cllm-card__title-wrap">
                   <span class="cllm-card__name">Qwen 2.5 (0.5B-Instruct)</span>
                   <span class="cllm-card__badge cllm-card__badge--green">Ultra-Light (~350 MB)</span>
+                  <span v-if="llmState.recommendedModelKey === 'qwen-0.5b'" class="cllm-card__rec-badge">★ Recommended</span>
                 </div>
                 <span v-if="llmState.activeModelKey === 'qwen-0.5b' && llmState.status === 'ready'" class="cllm-card__status-active">
                   ● Active in Memory
@@ -179,6 +199,66 @@
               </div>
             </div>
 
+            <!-- Model 1b: Qwen 2.5 (1.5B) -->
+            <div 
+              class="cllm-card"
+              :class="{
+                'cllm-card--active': llmState.activeModelKey === 'qwen-1.5b' && llmState.status === 'ready',
+                'cllm-card--cached': isCached('qwen-1.5b')
+              }"
+            >
+              <div class="cllm-card__top">
+                <div class="cllm-card__title-wrap">
+                  <span class="cllm-card__name">Qwen 2.5 (1.5B-Instruct)</span>
+                  <span class="cllm-card__badge cllm-card__badge--blue">Pro Quality (~950 MB)</span>
+                  <span v-if="llmState.recommendedModelKey === 'qwen-1.5b'" class="cllm-card__rec-badge">★ Recommended</span>
+                </div>
+                <span v-if="llmState.activeModelKey === 'qwen-1.5b' && llmState.status === 'ready'" class="cllm-card__status-active">
+                  ● Active in Memory
+                </span>
+                <span v-else-if="isCached('qwen-1.5b')" class="cllm-card__status-cached">
+                  ✓ Cached on Laptop
+                </span>
+              </div>
+
+              <p class="cllm-card__desc">
+                Balanced mid-sized WebGPU model delivering noticeably richer teacher prose and reliable instruction following without false-positive safety refusals.
+              </p>
+
+              <div class="cllm-card__footer">
+                <div class="cllm-card__specs">
+                  <span>RAM: ~1.3 GB</span>
+                  <span>•</span>
+                  <span>Speed: ~1.5s / comment</span>
+                </div>
+
+                <div class="cllm-card__actions">
+                  <button
+                    v-if="isCached('qwen-1.5b')"
+                    type="button"
+                    class="cllm-btn cllm-btn--danger-icon"
+                    title="Delete model from browser storage to free ~950 MB"
+                    :disabled="isLoading"
+                    @click="onPurgeCache('qwen-1.5b')"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+
+                  <button
+                    type="button"
+                    class="cllm-btn"
+                    :class="(llmState.activeModelKey === 'qwen-1.5b' && llmState.status === 'ready') ? 'cllm-btn--success' : 'cllm-btn--primary'"
+                    :disabled="isLoading || (llmState.activeModelKey === 'qwen-1.5b' && llmState.status === 'ready') || !llmState.hasWebGPU"
+                    @click="onSelectModel('qwen-1.5b')"
+                  >
+                    <span v-if="llmState.activeModelKey === 'qwen-1.5b' && llmState.status === 'ready'">Active</span>
+                    <span v-else-if="isCached('qwen-1.5b')">Load Model</span>
+                    <span v-else>Download &amp; Load (~950 MB)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Model 2: Llama 3.2 (1B) -->
             <div 
               class="cllm-card"
@@ -201,7 +281,7 @@
               </div>
 
               <p class="cllm-card__desc">
-                Meta's edge-optimized instruction model. Highest vocabulary diversity, smoothest phrasing, and strictest length adherence.
+                Meta's alternative 1B edge model. Good vocabulary, though it can occasionally trigger false-positive safety refusals on student feedback (Qwen 2.5 1.5B is recommended for best reliability).
               </p>
 
               <div class="cllm-card__footer">
@@ -250,6 +330,7 @@
                 <div class="cllm-card__title-wrap">
                   <span class="cllm-card__name">Chrome Built-in AI (Gemini Nano)</span>
                   <span class="cllm-card__badge cllm-card__badge--purple">Zero Download (0 MB)</span>
+                  <span v-if="llmState.recommendedModelKey === 'chrome-nano'" class="cllm-card__rec-badge">★ Recommended</span>
                 </div>
                 <span v-if="llmState.activeModelKey === 'chrome-nano' && llmState.status === 'ready'" class="cllm-card__status-active">
                   ● Active in Memory
@@ -1173,6 +1254,54 @@ async function onConfirmImport() {
 .cllm-modal__hw-badge--muted {
   background: rgba(148, 163, 184, 0.15);
   color: var(--text-secondary);
+}
+
+/* Quick Pick Guide & Device Suggestion */
+.cllm-modal__guide-card {
+  padding: 11px 14px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: var(--radius-sm, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cllm-modal__guide-rec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+.cllm-modal__guide-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--color-primary, #2563eb);
+  white-space: nowrap;
+}
+.cllm-modal__guide-reason {
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.cllm-modal__guide-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.cllm-card__rec-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
 }
 
 /* Progress Panel */

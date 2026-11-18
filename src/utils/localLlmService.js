@@ -5,7 +5,8 @@
  * Supports:
  *  1. Chrome Built-in Gemini Nano (window.ai) - 0 MB download
  *  2. Qwen 2.5 (0.5B-Instruct) via WebGPU/WebLLM - ~350 MB download (Ultra-Light)
- *  3. Llama 3.2 (1B-Instruct) via WebGPU/WebLLM - ~750 MB download (High Quality)
+ *  3. Qwen 2.5 (1.5B-Instruct) via WebGPU/WebLLM - ~950 MB download (Pro Quality)
+ *  4. Llama 3.2 (1B-Instruct) via WebGPU/WebLLM - ~750 MB download (High Quality)
  *
  * All execution occurs 100% locally inside the browser. Zero student PII leaves the device.
  */
@@ -24,6 +25,16 @@ export const MODEL_CATALOG = {
     modelIdF16: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',
     modelIdF32: 'Qwen2.5-0.5B-Instruct-q4f32_1-MLC',
     approxSizeMB: 350,
+    type: 'webllm'
+  },
+  'qwen-1.5b': {
+    key: 'qwen-1.5b',
+    name: 'Qwen 2.5 (1.5B-Instruct)',
+    badge: 'Pro Quality (~950 MB)',
+    description: 'Balanced mid-sized WebGPU model delivering richer, more natural teacher prose without false-positive safety refusals.',
+    modelIdF16: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+    modelIdF32: 'Qwen2.5-1.5B-Instruct-q4f32_1-MLC',
+    approxSizeMB: 950,
     type: 'webllm'
   },
   'llama-1b': {
@@ -56,8 +67,12 @@ export const llmState = reactive({
   cachedModelKeys: [], // list of keys cached on this machine
   hasWebGPU: false,
   hasF16: false,
+  deviceMemoryGB: null,
+  cpuCores: null,
   hasChromeNano: false,
-  chromeNanoStatus: 'unavailable', // 'readily' | 'after-download' | 'unavailable'
+  chromeNanoStatus: 'unavailable', // 'readily' | 'after-download' | 'available' | 'downloadable' | 'unavailable'
+  recommendedModelKey: null,
+  recommendationReason: '',
   lastError: null
 })
 
@@ -91,10 +106,27 @@ export async function detectHardwareCapabilities() {
     llmState.hasF16 = false
   }
 
-  // 2. Check Chrome Built-in AI
-  if (typeof window !== 'undefined' && window.ai?.languageModel) {
+  // 2. Check Chrome Built-in AI (Standardized LanguageModel API in Chrome 138+ and legacy window.ai.languageModel)
+  const modernApi = typeof globalThis !== 'undefined' ? globalThis.LanguageModel : null
+  const legacyApi = typeof window !== 'undefined' ? window.ai?.languageModel : null
+
+  if (modernApi && typeof modernApi.availability === 'function') {
     try {
-      const caps = await window.ai.languageModel.capabilities()
+      const avail = await modernApi.availability()
+      if (avail === 'available' || avail === 'downloadable' || avail === 'downloading' || avail === 'readily' || avail === 'after-download') {
+        llmState.hasChromeNano = true
+        llmState.chromeNanoStatus = avail
+      } else {
+        llmState.hasChromeNano = false
+        llmState.chromeNanoStatus = avail || 'unavailable'
+      }
+    } catch {
+      llmState.hasChromeNano = false
+      llmState.chromeNanoStatus = 'unavailable'
+    }
+  } else if (legacyApi && typeof legacyApi.capabilities === 'function') {
+    try {
+      const caps = await legacyApi.capabilities()
       if (caps && (caps.available === 'readily' || caps.available === 'after-download')) {
         llmState.hasChromeNano = true
         llmState.chromeNanoStatus = caps.available
@@ -111,14 +143,84 @@ export async function detectHardwareCapabilities() {
     llmState.chromeNanoStatus = 'unavailable'
   }
 
-  // 3. Scan local browser cache for downloaded WebLLM models
+  // 3. Read browser hardware hints (RAM & CPU cores)
+  const deviceMemoryGB = (typeof navigator !== 'undefined' && typeof navigator.deviceMemory === 'number')
+    ? navigator.deviceMemory
+    : null
+  const cpuCores = (typeof navigator !== 'undefined' && typeof navigator.hardwareConcurrency === 'number')
+    ? navigator.hardwareConcurrency
+    : null
+  llmState.deviceMemoryGB = deviceMemoryGB
+  llmState.cpuCores = cpuCores
+
+  // 4. Scan local browser cache for downloaded WebLLM models
   await refreshCachedModelsList()
+
+  // 5. Compute device-tailored recommendation
+  const rec = computeRecommendedModel({
+    hasWebGPU: llmState.hasWebGPU,
+    hasF16: llmState.hasF16,
+    deviceMemoryGB,
+    hasChromeNano: llmState.hasChromeNano,
+    chromeNanoStatus: llmState.chromeNanoStatus
+  })
+  llmState.recommendedModelKey = rec.key
+  llmState.recommendationReason = rec.reason
 
   return {
     hasWebGPU: llmState.hasWebGPU,
     hasF16: llmState.hasF16,
+    deviceMemoryGB: llmState.deviceMemoryGB,
+    cpuCores: llmState.cpuCores,
     hasChromeNano: llmState.hasChromeNano,
+    chromeNanoStatus: llmState.chromeNanoStatus,
+    recommendedModelKey: llmState.recommendedModelKey,
+    recommendationReason: llmState.recommendationReason,
     cachedKeys: llmState.cachedModelKeys
+  }
+}
+
+/**
+ * Recommends the best local model for the current device's WebGPU, RAM, and Chrome AI status.
+ */
+export function computeRecommendedModel({
+  hasWebGPU = false,
+  hasF16 = false,
+  deviceMemoryGB = null,
+  hasChromeNano = false,
+  chromeNanoStatus = 'unavailable'
+} = {}) {
+  if (!hasWebGPU) {
+    if (hasChromeNano) {
+      return {
+        key: 'chrome-nano',
+        reason: 'WebGPU is unavailable here, so Chrome Built-in AI (Gemini Nano) is your best zero-download option.'
+      }
+    }
+    return {
+      key: null,
+      reason: 'Neither WebGPU nor Chrome Built-in AI was detected on this browser.'
+    }
+  }
+
+  const hasAmpleRam = deviceMemoryGB === null || deviceMemoryGB >= 8
+  if (hasF16 && hasAmpleRam) {
+    return {
+      key: 'qwen-1.5b',
+      reason: 'Fast 16-bit WebGPU and 8+ GB RAM detected — Qwen 2.5 (1.5B) gives the best Ontario prose quality and strictest 400-character control.'
+    }
+  }
+
+  if (hasChromeNano && (chromeNanoStatus === 'available' || chromeNanoStatus === 'readily')) {
+    return {
+      key: 'chrome-nano',
+      reason: 'Gemini Nano is already ready in Chrome with 0 MB app download and minimal RAM overhead.'
+    }
+  }
+
+  return {
+    key: 'qwen-0.5b',
+    reason: 'Lower memory or 32-bit WebGPU detected — Qwen 2.5 (0.5B) gives the fastest, lightest footprint for school-issued laptops.'
   }
 }
 
@@ -135,7 +237,7 @@ export async function refreshCachedModelsList() {
   try {
     const { hasModelInCache } = await import('@mlc-ai/web-llm')
 
-    for (const key of ['qwen-0.5b', 'llama-1b']) {
+    for (const key of ['qwen-0.5b', 'qwen-1.5b', 'llama-1b']) {
       const modelDef = MODEL_CATALOG[key]
       const modelId = llmState.hasF16 ? modelDef.modelIdF16 : modelDef.modelIdF32
       try {
@@ -157,7 +259,7 @@ export async function refreshCachedModelsList() {
 /**
  * Loads and initializes the selected model into memory.
  *
- * @param {'qwen-0.5b'|'llama-1b'|'chrome-nano'} modelKey
+ * @param {'qwen-0.5b'|'qwen-1.5b'|'llama-1b'|'chrome-nano'} modelKey
  * @param {Function} [onProgress]
  */
 export async function loadModel(modelKey, onProgress = null) {
@@ -174,13 +276,33 @@ export async function loadModel(modelKey, onProgress = null) {
   try {
     // ── Engine 1: Chrome Built-in Nano ──
     if (modelDef.type === 'chrome-builtin') {
-      if (!window.ai?.languageModel) {
+      const modernApi = typeof globalThis !== 'undefined' ? globalThis.LanguageModel : null
+      const legacyApi = typeof window !== 'undefined' ? window.ai?.languageModel : null
+
+      if (!modernApi && !legacyApi) {
         throw new Error('Chrome Built-in AI is not available in this browser or disabled by school board policy.')
       }
 
       llmState.progressText = 'Starting local Chrome AI session...'
-      llmState.progress = 50
-      activeNanoSession = await window.ai.languageModel.create()
+      llmState.progress = 20
+
+      if (modernApi && typeof modernApi.create === 'function') {
+        activeNanoSession = await modernApi.create({
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              const raw = e.total ? (e.loaded / e.total) : (e.loaded || 0)
+              const pct = Math.min(100, Math.max(0, Math.round(raw * 100)))
+              llmState.progress = pct
+              llmState.progressText = `Downloading Gemini Nano (${pct}%)...`
+              if (typeof onProgress === 'function') onProgress(pct, llmState.progressText)
+            })
+          }
+        })
+      } else {
+        llmState.progress = 50
+        activeNanoSession = await legacyApi.create()
+      }
+
       llmState.progress = 100
       llmState.status = 'ready'
       llmState.progressText = 'Ready'
@@ -322,39 +444,36 @@ export function getDefaultSecondarySystemPrompt({
 } = {}) {
   return [
     `You are an expert Ontario educational writing assistant helping a high school teacher refine report card comments.`,
-    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
+    `Your goal: Synthesize the structured planner context and draft comment into smooth, authentic, parent-friendly prose.`,
     ``,
-    `CORE EDITING RULES (Ontario Growing Success & SCDSB Guidelines):`,
-    `1. LENGTH: Strictly under ${charLimit} characters (target 290-360 characters).`,
+    `CORE TRIAD & EDITING RULES (Ontario Growing Success & SCDSB APM A1460):`,
+    `1. LENGTH: Strictly under ${charLimit} characters (target 320-385 characters when limit is 400).`,
     `2. NO COURSE NAMES: Never mention the course code or subject name.`,
-    `3. 3-SENTENCE STRUCTURE: Produce exactly 3 flowing sentences without bullet points, headings, or labels (never write "Next step:").`,
-    `   - Sentence 1: Specific curriculum strength and conceptual understanding.`,
-    `   - Sentence 2: Thinking, problem-solving, or inquiry capability.`,
-    `   - Sentence 3: Actionable next step recommending a concrete learning scaffold or strategy.`,
+    `3. CORE TRIAD ARCHITECTURE (2 or 3 flowing sentences — zero headings or labels like "Next step:"):`,
+    `   - Element 1 (Strength): Specific curriculum strength paired with an accurate Growing Success level qualifier.`,
+    `   - Element 2 (Diagnostic Growth Gap): Specific curriculum topic or skill where greater consistency or depth is needed (never generic filler).`,
+    `   - Element 3 (Concept-Matched Study Tool): Concrete, realistic learning strategy or organizer matched to the growth topic.`,
+    `   - Vary structure naturally between 3-sentence diagnostic layouts and 2-sentence merged pivots ("though", "while", "by using").`,
     `4. GRAMMAR & TOPIC CORRECTION:`,
-    `   - Actively interpret and fix awkward phrasing or raw assignment titles from the draft.`,
-    `   - For example, rewrite awkward phrases like "when working on the Projectile" into natural phrasing like "when analyzing projectile motion", and "when solving Light Theory" into "when applying light theory concepts".`,
+    `   - Actively interpret and fix awkward phrasing or raw assignment titles from the draft (e.g. "Projectile" -> "projectile motion", "Light Theory" -> "light theory").`,
     `5. STRICT LOWERCASE FOR SUBJECTS & TOPICS (SCDSB APM A1460 Appendix E-1):`,
-    `   - Never capitalize academic topics or units (e.g. write "projectile motion", "light theory", "kinematics", "forces").`,
-    `   - If any subject or discipline is mentioned, write it strictly in lowercase (e.g. "mathematics", "science", "physics", "chemistry"), with the exception of proper nouns like "French".`,
-    `   - Only capitalize true proper nouns (e.g. "Newton's laws", "Ohm's law", "French") and the student's name.`,
+    `   - Never capitalize academic topics or units (e.g. write "projectile motion", "stoichiometry", "kinematics", "forces").`,
+    `   - Only capitalize true proper nouns (e.g. "Newton's laws", "Ohm's law", "Bohr-Rutherford", "French") and the student's name.`,
     `6. CANADIAN ENGLISH SPELLING (SCDSB APM A1460 Appendix E-1):`,
-    `   - Strictly use standard Canadian spelling (e.g., "colour", "behaviour", "centre", "modelling", "program"). Never use American spellings like "color", "behavior", "center", "modeling", "modeled".`,
-    `7. STRICT THIRD-PERSON VOICE:`,
-    `   - Do NOT use first-person pronouns ("I", "me", "my", "I recommend that").`,
-    `   - Write from a professional third-person educator perspective (e.g. "To support further growth, utilizing a structured checklist will help ${studentName}...").`,
+    `   - Strictly use standard Canadian spelling (e.g., "colour", "behaviour", "centre", "modelling", "labelled", "metres"). Never use American spellings ("color", "behavior", "center", "modeling", "labeled").`,
+    `7. STRICT THIRD-PERSON VOICE & NO LEARNING SKILLS IN SUBJECT COMMENTS:`,
+    `   - Do NOT use first-person pronouns ("I", "me", "my", "I recommend").`,
+    `   - Write from a professional third-person educator perspective (e.g. "Using a structured checklist will help ${studentName} verify multi-step calculations.").`,
+    `   - Report strictly on curriculum expectations (never comment on attendance, lateness, deadlines, or behaviour).`,
     `8. ASSET-BASED LANGUAGE (GROWING SUCCESS):`,
-    `   - Always frame learning with constructive, growth-oriented language.`,
-    `   - For developing skills, write "is continuing to build consistency" or "with guided practice, demonstrates developing confidence".`,
-    `   - NEVER use negative, deficit-based language like "is not as strong as it could be", "fails to", "struggles with", or "shows some potential".`,
-    `9. TOPIC FIDELITY & CURRICULUM GROUNDING:`,
-    `   - Preserve the authentic skills and next steps from the draft.`,
-    `   - If gradebook assessment context is provided, you may weave in the specific curriculum concepts, phenomena, or models evaluated in class. Do NOT invent unrelated course units.`,
+    `   - Frame developing skills constructively ("is continuing to build consistency with", "with guided practice").`,
+    `   - NEVER use deficit-based phrasing ("fails to", "struggles with", "shows some potential").`,
+    `9. TOPIC FIDELITY:`,
+    `   - Preserve the specific strength topic, growth topic, and recommended study tool from the planner context and draft. Do NOT invent unrelated units.`,
     `10. ${pronounInstruction}`,
     `11. STRICT OUTPUT FORMAT:`,
-    `   - Output ONLY the 3-sentence comment text.`,
-    `   - NEVER output conversational preamble or filler (do NOT write "Here is the polished comment:" or similar).`,
-    `   - Do NOT enclose the text in quotation marks.`
+    `   - Output ONLY the polished 2- or 3-sentence comment text.`,
+    `   - NEVER output conversational preamble, markdown fences, or quotation marks.`
   ].join('\n')
 }
 
@@ -460,8 +579,31 @@ export async function polishReportComment({
     systemPrompt += `\n\nCUSTOM TEACHER DIRECTIVES:\n${customDirectives.trim()}`
   }
 
-  const exampleDraft = `Alex demonstrates competent understanding and solid skills when analyzing projectile motion. They demonstrate sound problem-solving skills during classroom investigations and evaluations. Using a structured reference checklist will support Alex in verifying intermediate steps when applying light theory concepts.`
-  const examplePolished = `Alex demonstrates a solid understanding and strong technical precision when analyzing projectile motion. They consistently apply effective problem-solving strategies during classroom laboratory investigations. Utilizing a structured reference checklist will support Alex in verifying intermediate calculations when applying light theory concepts.`
+  const example1User = [
+    `CURRICULUM CONTEXT FROM GRADEBOOK:`,
+    `Course: SNC2D`,
+    `Featured Strength Focus: solving uniform acceleration and projectile motion problems`,
+    `Featured Next Step Focus: curved-mirror ray diagrams and SALT properties`,
+    `Recommended Study Tool: a step-by-step ray-tracing checklist for focal points`,
+    `Blueprint Structure: blueprint-1`,
+    ``,
+    `Draft comment to polish:`,
+    `Analyzing uniform acceleration and projectile motion, Alex demonstrates thorough conceptual understanding. Their next learning focus is constructing ray diagrams for plane and curved mirrors. Using a step-by-step ray-tracing checklist for focal points will help them verify intermediate steps systematically.`
+  ].join('\n')
+  const example1Assistant = `Alex demonstrates strong conceptual understanding when analyzing uniform acceleration and projectile motion. Building consistency with curved-mirror ray diagrams and SALT properties is their next milestone. Using a step-by-step ray-tracing checklist for focal points will help them verify image properties before evaluations.`
+
+  const example2User = [
+    `CURRICULUM CONTEXT FROM GRADEBOOK:`,
+    `Course: SCH3U`,
+    `Featured Strength Focus: ionic nomenclature and balancing chemical equations`,
+    `Featured Next Step Focus: limiting reactant stoichiometry`,
+    `Recommended Study Tool: a mole-ratio dimensional analysis table`,
+    `Blueprint Structure: blueprint-2`,
+    ``,
+    `Draft comment to polish:`,
+    `Priya tackles ionic nomenclature and balancing equations with considerable competence and clarity, though limiting reactants and theoretical yield remains an area for continued focus. For continued growth, she is encouraged to use a mole-ratio dimensional analysis table to consolidate accuracy before evaluations.`
+  ].join('\n')
+  const example2Assistant = `Priya handles ionic nomenclature and balancing chemical equations with considerable competence, though limiting reactant stoichiometry remains an area for continued focus. To strengthen accuracy before evaluations, she is encouraged to use a mole-ratio dimensional analysis table during independent practice.`
 
   let userDraftPrompt = `Draft comment to polish:\n${draftComment.trim()}`
   if (assessmentEvidence) {
@@ -469,6 +611,9 @@ export async function polishReportComment({
     if (assessmentEvidence.courseCode) lines.push(`Course: ${assessmentEvidence.courseCode}`)
     if (assessmentEvidence.strengthTask) lines.push(`Featured Strength Focus: ${assessmentEvidence.strengthTask}`)
     if (assessmentEvidence.growthTask) lines.push(`Featured Next Step Focus: ${assessmentEvidence.growthTask}`)
+    if (assessmentEvidence.recommendedTool) lines.push(`Recommended Study Tool: ${assessmentEvidence.recommendedTool}`)
+    if (assessmentEvidence.selectedBlueprint) lines.push(`Blueprint Structure: ${assessmentEvidence.selectedBlueprint}`)
+    if (assessmentEvidence.profileFocus) lines.push(`Profile Context: ${assessmentEvidence.profileFocus}`)
     if (Array.isArray(assessmentEvidence.assessments) && assessmentEvidence.assessments.length > 0) {
       const astSummary = assessmentEvidence.assessments.slice(0, 3).map(a => {
         let entry = `• ${a.name}`
@@ -490,14 +635,16 @@ export async function polishReportComment({
 
     if (llmState.activeModelKey === 'chrome-nano' && activeNanoSession) {
       // Chrome Prompt API
-      const prompt = `${systemPrompt}\n\nDraft comment to polish:\n${exampleDraft}\n\n${examplePolished}\n\n${userDraftPrompt}\n\n`
+      const prompt = `${systemPrompt}\n\n${example1User}\n\n${example1Assistant}\n\n${example2User}\n\n${example2Assistant}\n\n${userDraftPrompt}\n\n`
       rawOutput = await activeNanoSession.prompt(prompt)
     } else if (activeWebLlmEngine) {
-      // WebLLM Multi-Turn Chat Completion (standard few-shotting pattern prevents conversational preambles)
+      // WebLLM Multi-Turn Chat Completion (2-shot planner->writer examples prevent conversational preambles)
       const messages = [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Draft comment to polish:\n${exampleDraft}` },
-        { role: 'assistant', content: examplePolished },
+        { role: 'user', content: example1User },
+        { role: 'assistant', content: example1Assistant },
+        { role: 'user', content: example2User },
+        { role: 'assistant', content: example2Assistant },
         { role: 'user', content: userDraftPrompt }
       ]
       const completion = await activeWebLlmEngine.chat.completions.create({
@@ -560,7 +707,7 @@ export async function polishReportComment({
     if (isRefusal) {
       console.warn('Local LLM safety refusal detected:', cleanText)
       throw new Error(
-        'The local model triggered a false-positive safety refusal ("deceive or defraud"). Your draft comment was preserved. Try rephrasing or switching to Qwen 2.5 (0.5B) in AI Settings.'
+        'The local model triggered a false-positive safety refusal ("deceive or defraud"). Your draft comment was preserved. Try switching to Qwen 2.5 (1.5B) or Qwen 2.5 (0.5B) in AI Settings.'
       )
     }
 

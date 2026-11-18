@@ -9,6 +9,8 @@ import {
   COURSE_COMPETENCIES,
   getCourseCompetencies,
   mapAssessmentToCompetency,
+  mapAssessmentToShortTopic,
+  mapAssessmentToTool,
   extractCompetenciesFromAssessment,
   matchesKeyword
 } from './utils/curriculumCompetencies.js'
@@ -37,8 +39,32 @@ console.log('TEST GROUP 1: Modular Secondary Course Registry')
 const expectedCourses = ['SPH3U', 'SNC1W', 'SBI3U', 'SCH3U', 'SPH4U', 'SNC2D', 'SNC2P', 'MTH1W', 'MPM2D', 'MFM2P']
 expectedCourses.forEach(code => {
   const comps = getCourseCompetencies(code)
-  assert(Array.isArray(comps) && comps.length > 0, `Course ${code} is registered with ${comps.length} competencies`)
+  assert(Array.isArray(comps) && comps.length >= 7, `Course ${code} is registered with ${comps.length} competencies (>= 7)`)
+  comps.forEach(comp => {
+    assert(typeof comp.phrase === 'string' && comp.phrase.length > 10, `${code} "${comp.label}" has phrase`)
+    assert(Array.isArray(comp.phraseVariants) && comp.phraseVariants.length >= 4, `${code} "${comp.label}" has >= 4 phraseVariants`)
+    comp.phraseVariants.forEach(pv => {
+      assert(pv.length <= 68, `${code} "${comp.label}" phraseVariant <= 68 chars (${pv.length}): "${pv}"`)
+    })
+    assert(Array.isArray(comp.shortTopics) && comp.shortTopics.length >= 3, `${code} "${comp.label}" has >= 3 shortTopics`)
+    assert(Array.isArray(comp.tools) && comp.tools.length >= 3, `${code} "${comp.label}" has >= 3 concept-matched tools`)
+    comp.tools.forEach(tool => {
+      assert(!/^(using|utilizing|listing)\b/i.test(tool), `${code} "${comp.label}" tool is a clean noun phrase: "${tool}"`)
+    })
+  })
 })
+
+// Verify shortTopics and concept-matched tools lookup
+const opticsTopic = mapAssessmentToShortTopic('Curved Mirror Ray Diagrams Lab', 'SNC2D', '', 0)
+const opticsTool = mapAssessmentToTool('Curved Mirror Ray Diagrams Lab', 'SNC2D', '', 0)
+assert(opticsTopic.toLowerCase().includes('mirror') || opticsTopic.toLowerCase().includes('ray'), `SNC2D shortTopic matched: "${opticsTopic}"`)
+assert(opticsTool.toLowerCase().includes('ray') || opticsTool.toLowerCase().includes('mirror') || opticsTool.toLowerCase().includes('salt'), `SNC2D tool matched: "${opticsTool}"`)
+
+const mathTool = mapAssessmentToTool('Quadratic Formula & Vertex Form Quiz', 'MPM2D', '', 0)
+assert(mathTool.toLowerCase().includes('quadratic') || mathTool.toLowerCase().includes('step-pattern') || mathTool.toLowerCase().includes('vertex'), `MPM2D tool matched: "${mathTool}"`)
+
+const codingTopic = mapAssessmentToShortTopic('Python Loops & Conditional Expressions Lab', 'MTH1W', '', 0)
+assert(codingTopic.toLowerCase().includes('coding') || codingTopic.toLowerCase().includes('loop'), `MTH1W coding shortTopic matched: "${codingTopic}"`)
 
 // ── Test 2: Word Boundary Keyword Matching ──
 console.log('\nTEST GROUP 2: Word Boundary Matching (Preventing False Substring Matches)')

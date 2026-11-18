@@ -195,7 +195,7 @@
                 @click="rerollPhrasing"
               >
                 <Sparkles :size="14" />
-                <span>🎲 Reroll Phrasing</span>
+                <span>Reroll Phrasing</span>
               </button>
 
               <!-- Local AI Polish Button -->
@@ -209,8 +209,8 @@
               >
                 <Sparkles :size="13" :class="{ 'cg__icon--spin': isPolishing }" />
                 <span v-if="isPolishing">Polishing (Local AI)...</span>
-                <span v-else-if="llmState.status === 'ready'">✨ Polish ({{ llmState.activeModelKey === 'qwen-0.5b' ? 'Qwen' : (llmState.activeModelKey === 'llama-1b' ? 'Llama' : 'Nano') }})</span>
-                <span v-else>✨ AI Polish (Offline)...</span>
+                <span v-else-if="llmState.status === 'ready'">Polish ({{ llmState.activeModelKey === 'qwen-0.5b' ? 'Qwen 0.5B' : (llmState.activeModelKey === 'qwen-1.5b' ? 'Qwen 1.5B' : (llmState.activeModelKey === 'llama-1b' ? 'Llama' : 'Nano')) }})</span>
+                <span v-else>AI Polish (Offline)...</span>
               </button>
 
               <select
@@ -295,15 +295,15 @@
               </div>
               <select v-model="selectedProfileFocus" class="cg__select cg__select--field">
                 <option value="auto">Auto-detected ({{ autoProfileLabel }})</option>
-                <option value="inquiry_practical">🔬 Hands-on Labs &amp; Empirical Inquiry</option>
-                <option value="analytical_theory">📐 Analytical Problem Solving &amp; Theory</option>
-                <option value="growth_trajectory">📈 Rising Momentum &amp; Formative Growth</option>
-                <option value="consistent_rigor">🎯 High Consistency &amp; Rigorous Application</option>
-                <option value="category_thinking">💡 Critical Thinking &amp; Inquiry</option>
-                <option value="category_communication">💬 Technical Communication &amp; Precision</option>
-                <option value="category_application">🌍 Real-World &amp; Authentic Application</option>
-                <option value="qualitative_evidence">🗣️ Triangulation (Observations / Conversations)</option>
-                <option value="curriculum_general">📚 General Curriculum Synthesis</option>
+                <option value="inquiry_practical">Hands-on Labs &amp; Empirical Inquiry</option>
+                <option value="analytical_theory">Analytical Problem Solving &amp; Theory</option>
+                <option value="growth_trajectory">Rising Momentum &amp; Formative Growth</option>
+                <option value="consistent_rigor">High Consistency &amp; Rigorous Application</option>
+                <option value="category_thinking">Critical Thinking &amp; Inquiry</option>
+                <option value="category_communication">Technical Communication &amp; Precision</option>
+                <option value="category_application">Real-World &amp; Authentic Application</option>
+                <option value="qualitative_evidence">Triangulation (Observations / Conversations)</option>
+                <option value="curriculum_general">General Curriculum Synthesis</option>
               </select>
             </div>
 
@@ -438,7 +438,7 @@
             <div v-if="showPrevTerm" class="cg__prev-term-body">
               <p class="cg__prev-term-text">"{{ previousTermComment }}"</p>
               <div class="cg__prev-term-hint">
-                💡 Progression Tip: Ensure {{ selectedTerm }} next steps target new growth areas rather than repeating the {{ previousTermName }} focus.
+                Progression Tip: Ensure {{ selectedTerm }} next steps target new growth areas rather than repeating the {{ previousTermName }} focus.
               </div>
             </div>
           </div>
@@ -576,6 +576,8 @@ const termGrowthTasks = ref({}) // `${term}__${studentId}` -> task string
 const termProfileFocuses = ref({}) // `${term}__${studentId}` -> profile focus string ('auto' | 'inquiry_practical' | ...)
 const termGradesCache = ref({}) // `${term}__${studentId}` -> calculatedGradeObj
 const currentCommentText = ref('')
+const lastGeneratedBlueprint = ref('')
+const lastRecommendedTool = ref('')
 const copySuccess = ref(false)
 const copiedStudents = ref(new Set())
 const customEdits = ref({}) // `${term}__${studentId}` -> manually edited comment text
@@ -878,6 +880,8 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
         assessmentType: a.assessmentType || a.type || '',
         expectations: a.expectations || a.expectationIds || [],
         note: grade?.note || a.note || '',
+        attempts: grade?.attempts || [],
+        maxPoints: a.maxPoints,
         modality: a.modality || '',
         weight: a.weight,
         classMedian: classAssessmentMedians.value[a.assessmentId]
@@ -910,7 +914,11 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
           assessmentType: a.assessmentType || a.type || '',
           expectations: a.expectations || a.expectationIds || [],
           note: grade?.note || a.note || '',
-          modality: a.modality || ''
+          attempts: grade?.attempts || [],
+          maxPoints: a.maxPoints,
+          modality: a.modality || '',
+          weight: a.weight,
+          classMedian: classAssessmentMedians.value[a.assessmentId]
         })
       }
     })
@@ -952,27 +960,35 @@ const courseCompetencies = computed(() => {
   return getCourseCompetencies(currentCourseCode.value)
 })
 
+function resolveCompetencyDisplayLabel(rawVal, fallbackLabel) {
+  if (!rawVal) return fallbackLabel
+  const found = courseCompetencies.value.find(c =>
+    c.phrase === rawVal ||
+    (Array.isArray(c.phraseVariants) && c.phraseVariants.includes(rawVal)) ||
+    (Array.isArray(c.shortTopics) && c.shortTopics.includes(rawVal))
+  )
+  return found ? found.label : rawVal
+}
+
 const autoEvidence = computed(() => {
   const stId = activeStudent.value?.studentId
   const gradeObj = getStudentGradeObj(stId)
   return extractEvidenceFromGrades({
     ...gradeObj,
     assessments: studentAssessments.value
-  }, currentCourseCode.value)
+  }, currentCourseCode.value, {
+    reportingPeriod: selectedTerm.value,
+    isFinal: selectedTerm.value === 'Final',
+    variantSeed: getTermVariantSeed(stId)
+  })
 })
 
 const autoStrengthTask = computed(() => autoEvidence.value.strengthTask || '')
 const autoGrowthTask = computed(() => autoEvidence.value.growthTask || '')
 
-const autoStrengthLabel = computed(() => {
-  const found = courseCompetencies.value.find(c => c.phrase === autoStrengthTask.value)
-  return found ? found.label : (autoStrengthTask.value || 'General')
-})
+const autoStrengthLabel = computed(() => resolveCompetencyDisplayLabel(autoStrengthTask.value, 'General'))
 
-const autoGrowthLabel = computed(() => {
-  const found = courseCompetencies.value.find(c => c.phrase === autoGrowthTask.value)
-  return found ? found.label : (autoGrowthTask.value || 'General')
-})
+const autoGrowthLabel = computed(() => resolveCompetencyDisplayLabel(autoGrowthTask.value, 'General'))
 
 // Per-term & Per-student specific selections
 const selectedStrengthTask = computed({
@@ -1058,28 +1074,26 @@ const selectedProfileFocus = computed({
 
 const activeStrengthDisplay = computed(() => {
   const raw = selectedStrengthTask.value || autoStrengthTask.value
-  const found = courseCompetencies.value.find(c => c.phrase === raw)
-  return found ? found.label : (raw || 'General Achievement')
+  return resolveCompetencyDisplayLabel(raw, 'General Achievement')
 })
 
 const activeGrowthDisplay = computed(() => {
   const raw = selectedGrowthTask.value || autoGrowthTask.value
-  const found = courseCompetencies.value.find(c => c.phrase === raw)
-  return found ? found.label : (raw || 'Independent Review')
+  return resolveCompetencyDisplayLabel(raw, 'Independent Review')
 })
 
 const activeHabitDisplay = computed(() => {
   if (selectedProfileFocus.value && selectedProfileFocus.value !== 'auto') {
     const focusMap = {
-      inquiry_practical: '🔬 Practical Inquiry',
-      analytical_theory: '📐 Analytical Problem Solving',
-      growth_trajectory: '📈 Rising Momentum',
-      consistent_rigor: '🎯 High Consistency',
-      category_thinking: '💡 Critical Thinking',
-      category_communication: '💬 Technical Communication',
-      category_application: '🌍 Real-World Application',
-      qualitative_evidence: '🗣️ Triangulated Observations',
-      curriculum_general: '📚 General Curriculum'
+      inquiry_practical: 'Practical Inquiry',
+      analytical_theory: 'Analytical Problem Solving',
+      growth_trajectory: 'Rising Momentum',
+      consistent_rigor: 'High Consistency',
+      category_thinking: 'Critical Thinking',
+      category_communication: 'Technical Communication',
+      category_application: 'Real-World Application',
+      qualitative_evidence: 'Triangulated Observations',
+      curriculum_general: 'General Curriculum'
     }
     return focusMap[selectedProfileFocus.value] || 'Pedagogical Focus'
   }
@@ -1303,6 +1317,8 @@ function buildCommentForActive() {
   })
 
   currentCommentText.value = result.text
+  lastGeneratedBlueprint.value = result.blueprintId || ''
+  lastRecommendedTool.value = result.recommendedTool || ''
 }
 
 // Re-generate when inputs change
@@ -1359,6 +1375,8 @@ async function handleAiPolishClick() {
         courseCode: currentCourseCode.value,
         strengthTask: activeStrengthDisplay.value,
         growthTask: activeGrowthDisplay.value,
+        recommendedTool: lastRecommendedTool.value || autoEvidence.value?.recommendedTool || '',
+        selectedBlueprint: lastGeneratedBlueprint.value || '',
         profileFocus: activeHabitDisplay.value,
         assessments: studentAssessments.value.map(a => ({
           name: a.name,

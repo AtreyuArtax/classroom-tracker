@@ -933,9 +933,9 @@ test('Ashton comment in SNC1W strictly avoids repeated "demonstrates" and vague 
 
     assert(res.charCount <= 400, `Comment exceeds 400 chars: ${res.charCount}`)
 
-    // Verify Sentence 1 and Sentence 2 do not repeat the same verb
+    // Verify Sentence 1 and Sentence 2 do not repeat the same verb, and structure uses 2- or 3-sentence Core Triad
     const sentences = res.text.split(/(?<=[.?!])\s+/).filter(Boolean)
-    assert(sentences.length >= 3, `Expected 3 sentences, got ${sentences.length}: ${res.text}`)
+    assert(sentences.length >= 2 && sentences.length <= 3, `Expected 2 or 3 sentences, got ${sentences.length}: ${res.text}`)
 
     const s1 = sentences[0]
     const s2 = sentences[1]
@@ -946,23 +946,20 @@ test('Ashton comment in SNC1W strictly avoids repeated "demonstrates" and vague 
       `Sentence 1 and Sentence 2 repeat "demonstrates"! Comment:\n${res.text}`
     )
 
-    // Verify Sentence 2 is concrete and not vague boilerplate
+    // Verify no generic Sentence 2 filler and Core Triad presence (Space topic + Space-matched tool)
     const lower = res.text.toLowerCase()
     assert(
-      !lower.includes('in applying course concepts and methods'),
-      `Sentence 2 contains vague boilerplate "in applying course concepts and methods". Comment:\n${res.text}`
+      !lower.includes('in applying course concepts and methods') &&
+      !lower.includes('apply core procedures with competence, communicating intermediate solution steps'),
+      `Comment contains generic S2 filler. Comment:\n${res.text}`
     )
-
-    // Verify Sentence 2 has meaningful cognitive action
     assert(
-      lower.includes('multi-step') ||
-      lower.includes('growth') ||
-      lower.includes('precision') ||
-      lower.includes('principles') ||
-      lower.includes('relationships') ||
-      lower.includes('accuracy') ||
-      lower.includes('inquiries'),
-      `Sentence 2 lacked concrete cognitive descriptors: ${s2}`
+      /celestial|astronomical|space|solar|orbit|eclipse/i.test(res.text),
+      `Expected Space growth focus in Ashton comment: ${res.text}`
+    )
+    assert(
+      /earth-moon-sun|cosmic phenomena|space science terminology/i.test(res.text),
+      `Expected Space-matched study tool in Ashton comment: ${res.text}`
     )
   }
 })
@@ -1248,7 +1245,7 @@ test('SNC1W class with shared 4-5 assessments produces diverse S1/S2/S3 stems an
 
   const s1Stems = new Set()
   const s2Stems = new Set()
-  const s3Stems = new Set()
+  const blueprintIds = new Set()
   const fullTemplates = new Set()
 
   roster.forEach((student, idx) => {
@@ -1270,16 +1267,142 @@ test('SNC1W class with shared 4-5 assessments produces diverse S1/S2/S3 stems an
 
     const norm = normalizeCommentTemplate(res.text, student)
     fullTemplates.add(norm)
+    blueprintIds.add(res.blueprintId)
     const parts = norm.split(/(?<=[.!?])\s+/)
     if (parts[0]) s1Stems.add(parts[0])
     if (parts[1]) s2Stems.add(parts[1])
-    if (parts[2]) s3Stems.add(parts[2])
   })
 
   assert.strictEqual(fullTemplates.size, 8, `Expected 8 unique full comments, got ${fullTemplates.size}`)
   assert(s1Stems.size >= 6, `Expected >= 6 distinct S1 stems across 8 students, got ${s1Stems.size}`)
-  assert(s2Stems.size >= 5, `Expected >= 5 distinct S2 stems across 8 students, got ${s2Stems.size}`)
-  assert(s3Stems.size >= 5, `Expected >= 5 distinct S3 stems across 8 students, got ${s3Stems.size}`)
+  assert(s2Stems.size >= 6, `Expected >= 6 distinct S2 stems across 8 students, got ${s2Stems.size}`)
+  assert(blueprintIds.size >= 5, `Expected >= 5 distinct ORCCG blueprints across 8 students, got ${blueprintIds.size}`)
+})
+
+// ── TEST GROUP 17: Retests, Teacher Notes, Final Cutoffs & 30-Student Roster ─
+console.log('\nTEST GROUP 17: Retest History, Teacher Notes, Final Cutoff & 30-Student Roster Diversity')
+
+test('extractEvidenceFromGrades skips retest-mastered task (49% -> 90%) as growth gap', () => {
+  const gradeData = {
+    percentage: 82,
+    assessments: [
+      {
+        name: 'Atomic Structure & Periodic Table Quiz',
+        scorePercent: 90,
+        attempts: [{ scorePercent: 49 }, { scorePercent: 90 }],
+        date: '2026-10-01'
+      },
+      {
+        name: 'Electrical Circuits Lab',
+        scorePercent: 72,
+        date: '2026-10-12'
+      },
+      {
+        name: 'Ecosystem Sustainability Test',
+        scorePercent: 86,
+        date: '2026-09-20'
+      }
+    ]
+  }
+
+  const evidence = extractEvidenceFromGrades(gradeData, 'SNC1W')
+  assert(evidence.retestMasteredTasks.includes('Atomic Structure & Periodic Table Quiz'), 'Must detect retest mastery')
+  assert(!evidence.growthTask.toLowerCase().includes('atomic'), `Retest-mastered topic must not be chosen as growth weakness: ${evidence.growthTask}`)
+  assert(evidence.growthTask.toLowerCase().includes('circuit') || evidence.growthTask.toLowerCase().includes('ohm'), `Expected Circuits as growth gap, got: ${evidence.growthTask}`)
+})
+
+test('extractEvidenceFromGrades prioritizes academic teacher notes while ignoring disciplinary/device notes', () => {
+  const gradeData = {
+    percentage: 78,
+    teacherNote: 'Was on phone during class and arrived late twice.',
+    assessments: [
+      {
+        name: 'Kinematics Test',
+        scorePercent: 88,
+        note: 'Strong 1D calculations; late to lab once.'
+      },
+      {
+        name: 'Energy & Power Lab',
+        scorePercent: 76,
+        note: 'Chatting at bench; absent on Tuesday.'
+      },
+      {
+        name: 'Forces Evaluation',
+        scorePercent: 79,
+        note: 'Needs review on free-body diagrams and Newton laws.'
+      }
+    ]
+  }
+
+  const evidence = extractEvidenceFromGrades(gradeData, 'SPH3U')
+  assert.strictEqual(evidence.growthSource, 'teacher_note', `Expected teacher_note growth source, got ${evidence.growthSource}`)
+  assert(
+    evidence.growthTask.toLowerCase().includes('free-body') || evidence.growthTask.toLowerCase().includes('newton'),
+    `Expected Forces/FBD from academic teacher note, got: ${evidence.growthTask}`
+  )
+  assert(!evidence.growthTask.toLowerCase().includes('phone') && !evidence.growthTask.toLowerCase().includes('late'))
+})
+
+test('Final reportingPeriod prioritizes second-half assessments when >= 4 assessments exist', () => {
+  const gradeData = {
+    percentage: 81,
+    assessments: [
+      { name: 'Ecosystem Sustainability Quiz', scorePercent: 94, date: '2026-09-12' },
+      { name: 'Matter & Periodic Table Test', scorePercent: 62, date: '2026-09-28' },
+      { name: 'Space Celestial Systems Test', scorePercent: 91, date: '2026-11-25' },
+      { name: 'Ohm’s Law & Circuits Lab', scorePercent: 66, date: '2026-12-10' }
+    ]
+  }
+
+  const finalEvidence = extractEvidenceFromGrades(gradeData, 'SNC1W', { reportingPeriod: 'Final', isFinal: true })
+  assert(
+    /celestial|space|astronomical|planet|orbit/i.test(finalEvidence.strengthTask),
+    `Expected post-midterm Space Test (91%, Nov) to outweigh Sept Ecosystem Quiz (94%) on Final report, got: ${finalEvidence.strengthTask}`
+  )
+  assert(
+    /circuit|ohm/i.test(finalEvidence.growthTask),
+    `Expected post-midterm Circuits Lab (66%, Dec) over Sept Matter Test (62%) on Final report, got: ${finalEvidence.growthTask}`
+  )
+})
+
+test('30-student class batch in SNC2D covers all 6 ORCCG blueprints, matched tools, [280, 400] char budget, and Canadian spelling', () => {
+  const sharedAssessments = [
+    { name: 'Mirror Ray Diagrams & Optics Lab', scorePercent: 89, date: '2026-10-10' },
+    { name: 'Chemical Reactions & Balancing Test', scorePercent: 72, date: '2026-11-05' },
+    { name: 'Climate Feedback Loops Project', scorePercent: 84, date: '2026-12-01' }
+  ]
+
+  const blueprintsSeen = new Set()
+  const uniqueComments = new Set()
+
+  for (let i = 0; i < 30; i++) {
+    const student = {
+      studentId: `stu-batch-${i}`,
+      firstName: `Student${i + 1}`,
+      pronouns: i % 3 === 0 ? 'she/her' : (i % 3 === 1 ? 'he/him' : 'they/them')
+    }
+    const seed = computeStudentVariantSeed(student, 'Midterm', i)
+    const res = generateReportComment({
+      student,
+      gradeData: { percentage: 81, assessments: sharedAssessments },
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC2D',
+        reportingPeriod: 'Midterm',
+        variantSeed: seed,
+        charLimit: 400
+      }
+    })
+
+    assert(res.charCount >= 280 && res.charCount <= 400, `Student ${i + 1} length ${res.charCount} outside [280, 400]: ${res.text}`)
+    assert(!/\b(color|modeling|labeled|behavior|center)\b/i.test(res.text), `American spelling leaked: ${res.text}`)
+    assert(res.recommendedTool && res.recommendedTool.length > 10, 'Must resolve a concept-matched recommendedTool')
+    blueprintsSeen.add(res.blueprintId)
+    uniqueComments.add(normalizeCommentTemplate(res.text, student))
+  }
+
+  assert.strictEqual(blueprintsSeen.size, 6, `Expected all 6 blueprints across 30 students, saw: ${[...blueprintsSeen].join(', ')}`)
+  assert(uniqueComments.size >= 24, `Expected >= 24 unique templates across 30 students, got ${uniqueComments.size}`)
 })
 
 console.log('\n=================================================================')

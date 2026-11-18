@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1792894247.3808084,
-    "ast_hash": "776c5509bd1b541a6f28e28be2b33256",
+    "mtime": 1795005340.677959,
+    "ast_hash": "3e2d14f3764d633ee42a69a1e755c5dc",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1790561801.6876538,
-    "ast_hash": "82764f8fd35a42ccadc3ce7bd1fc76e1",
+    "mtime": 1794961529.2494948,
+    "ast_hash": "365f61fbbe92549949ce3e66c47c144b",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/utils/reportFormatter.js": {
-    "mtime": 1788313659.7649827,
-    "ast_hash": "b6966ff8e9698577b268f33130ed8e89",
+    "mtime": 1794965948.8181798,
+    "ast_hash": "e3bfb33371dc234898ccc339102e0e6b",
     "semantic_hash": ""
   },
   "src/components/setup/SetupQuickJumpNav.vue": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsLearningSkills.vue": {
-    "mtime": 1790255772.929306,
-    "ast_hash": "b4f5958d0da6d597ecc38c8c18881e44",
+    "mtime": 1795005342.0146441,
+    "ast_hash": "c73e413bd59ae90a04034ee5404d25f9",
     "semantic_hash": ""
   },
   "src/db/learningSkillsService.js": {
@@ -1650,38 +1650,38 @@
     "semantic_hash": ""
   },
   "src/components/reports/CommentLlmSettingsModal.vue": {
-    "mtime": 1791853200.9871979,
-    "ast_hash": "bf6177c52bc77c1f7025b2eb7bc58b0a",
+    "mtime": 1795010804.0794094,
+    "ast_hash": "747d50671d18c49a04ae5bf765d30f84",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsCommentGenerator.vue": {
-    "mtime": 1794586437.5871623,
-    "ast_hash": "70c38cecf6c414616347cf2751b0afc8",
+    "mtime": 1795011035.7016807,
+    "ast_hash": "f56350335220726209ba3fd77c842bc1",
     "semantic_hash": ""
   },
   "src/test_comment_generator.js": {
-    "mtime": 1794586447.3767595,
-    "ast_hash": "82f662f57a2cc199a7af4098dc31c364",
+    "mtime": 1795010291.4813702,
+    "ast_hash": "1c3fb858a8efe0511224df6d33824732",
     "semantic_hash": ""
   },
   "src/test_local_llm_service.js": {
-    "mtime": 1791673542.0185955,
-    "ast_hash": "07e6eae875594242b7f9e855343b910e",
+    "mtime": 1795010815.5447834,
+    "ast_hash": "acbee2d5008ea0a35f176c03b9ec493d",
     "semantic_hash": ""
   },
   "src/utils/commentGenerator.js": {
-    "mtime": 1794586399.064029,
-    "ast_hash": "5d79825acb3a4d7749d0987735bd7872",
+    "mtime": 1795011060.1853821,
+    "ast_hash": "2861e896939442a2fe610be1e507de62",
     "semantic_hash": ""
   },
   "src/utils/localLlmService.js": {
-    "mtime": 1791887284.2348166,
-    "ast_hash": "c7cd6287489918231d51bc7741082251",
+    "mtime": 1795010775.0889807,
+    "ast_hash": "c71eb6d1983d66d7d7c537d1b4d8e5df",
     "semantic_hash": ""
   },
   "src/utils/curriculumCompetencies.js": {
-    "mtime": 1792925736.703661,
-    "ast_hash": "af2078e2ca79fcb687cf3d8d69951350",
+    "mtime": 1795009809.4267013,
+    "ast_hash": "171d5a1560343e1976433bcbc353d8a9",
     "semantic_hash": ""
   },
   "src/components/reports/ElementaryCommentGenerator.vue": {
@@ -1750,48 +1750,48 @@
     "semantic_hash": ""
   },
   "src/data/comments/secondary/index.js": {
-    "mtime": 1791855271.3829167,
-    "ast_hash": "67e37cbfa8bb3d1e3c1163188b2a5195",
+    "mtime": 1795009776.2164483,
+    "ast_hash": "11d8489f53bdb244be81036b22054e5d",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/mpm2d.js": {
-    "mtime": 1791855264.4914243,
-    "ast_hash": "ae8d632fadbf4814b400486f747e77a0",
+    "mtime": 1795009762.2459583,
+    "ast_hash": "f6d267eb6d3fbf8212c2efc8a2c3bd6e",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/mth1w.js": {
-    "mtime": 1791855259.5980494,
-    "ast_hash": "58b035101f33b49a23bf60a682594f20",
+    "mtime": 1795009747.5949035,
+    "ast_hash": "05ae2c43a4d4d3fa84a4037fc2d2ef51",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/sbi3u.js": {
-    "mtime": 1791855238.2321634,
-    "ast_hash": "35405e4c1da2c03cc202d42fc4009eb3",
+    "mtime": 1795009727.3533022,
+    "ast_hash": "7fb9480a518b7ba459da84cb19f9dfec",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/sch3u.js": {
-    "mtime": 1791855245.251302,
-    "ast_hash": "61049b142a1d0cebae45540ed32db7ea",
+    "mtime": 1795009713.0024865,
+    "ast_hash": "33ceb47f7f1f5a7a6a07ca7cdf7a25a6",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/snc1w.js": {
-    "mtime": 1792925725.6816385,
-    "ast_hash": "5009ba15fcbbb5b65e7383cb4b72d76e",
+    "mtime": 1795009644.9963744,
+    "ast_hash": "0efabc113cdf2f532c6e36cc2e7bcadb",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/snc2d.js": {
-    "mtime": 1791855255.8994915,
-    "ast_hash": "f4e569bf5e1eb8b6ec26b2ee4ddd72a6",
+    "mtime": 1795009659.3362234,
+    "ast_hash": "8b3a0aa06dc4ed3ddfddbe539e85bb5c",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/sph3u.js": {
-    "mtime": 1791855221.3721771,
-    "ast_hash": "a663187349e9f196400989c420a28145",
+    "mtime": 1795009683.2009163,
+    "ast_hash": "018119937baffdaec43f1c517c2e72d2",
     "semantic_hash": ""
   },
   "src/data/comments/secondary/sph4u.js": {
-    "mtime": 1791855251.707927,
-    "ast_hash": "d09a39bd4a7ef8f4fe9941ade07ac253",
+    "mtime": 1795009699.1541474,
+    "ast_hash": "f4aed537404407348a9f30142ade4752",
     "semantic_hash": ""
   },
   "src/test_canadian_spelling.js": {
@@ -1800,8 +1800,8 @@
     "semantic_hash": ""
   },
   "src/test_curriculum_modular.js": {
-    "mtime": 1791855405.7767918,
-    "ast_hash": "3d9cf0d167e88dccc8fb2af86bb50696",
+    "mtime": 1795010295.0847557,
+    "ast_hash": "242e64be54537e4aa3d4d61f5269bb7a",
     "semantic_hash": ""
   },
   "src/utils/canadianSpelling.js": {

@@ -2,20 +2,28 @@
  * src/utils/commentGenerator.js
  *
  * Deterministic report card comment generator for Ontario curriculum and universal grading.
- * Compliant with Ontario's Growing Success framework:
- *   [Strength + Specific Task Evidence] + [Learning Skills / Work Habits] + [Actionable Next Step]
- *
- * Supports:
- *  - Strict secondary SIS character budget (target <= 400 characters, configurable limit)
- *  - Expanded elementary narrative mode (target ~800-1200 characters)
- *  - Graceful fallback cascade: SBAR Expectations -> Category Strengths (K/T/C/A) -> Holistic Level
- *  - Pronoun modes: 'preferred' (he/she/they), 'name-only' (uses first name, avoids pronouns), 'roster'
- *  - Combinatorial variations: 4+ unique stylistic phrasings per level with deterministic rerolling
+ * Compliant with Ontario's Growing Success framework & SCDSB APM A1460:
+ *   - Core Triad: [Level-Qualified Strength] + [Specific Diagnostic Growth Gap] + [Concept-Matched Tool/Strategy]
+ *   - 6 Syntactic Blueprints (mixing 3-sentence diagnostic layouts and 2-sentence merged pivots)
+ *   - Strict secondary SIS character budget (target 300-385 chars, strictly <= 400 chars)
+ *   - Expanded elementary narrative mode (target ~800-1200 characters)
+ *   - Retest/attempt history, teacher note, and reporting-period cutoff aware evidence extraction
+ *   - Pronoun modes: 'preferred' (he/she/they), 'name-only' (uses first name, avoids pronouns), 'roster'
  *
  * Pure utility function: no database imports, no side-effects, 100% unit-testable.
  */
 
-import { mapAssessmentToCompetency, extractCompetenciesFromAssessment, condenseCurriculumExpectation } from './curriculumCompetencies.js'
+import {
+  mapAssessmentToCompetency,
+  mapAssessmentToShortTopic,
+  mapAssessmentToTool,
+  extractCompetenciesFromAssessment,
+  resolveCompetencyObject,
+  pickCompetencyPhrase,
+  pickCompetencyShortTopic,
+  pickCompetencyTool,
+  condenseCurriculumExpectation
+} from './curriculumCompetencies.js'
 import { enforceCanadianSpelling } from './canadianSpelling.js'
 import { isFormativeAssessment } from './gradeCalc.js'
 
@@ -60,11 +68,9 @@ export function getAchievementLevel(mark) {
  * Generates pronoun / name replacement tokens for a student.
  * @param {Object} student
  * @param {'preferred'|'name-only'|'roster'} pronounMode
- * @returns {{ name: string, subject: string, subjectLower: string, object: string, possessive: string, isPlural: boolean }}
+ * @returns {{ name: string, subject: string, subjectLower: string, object: string, possessive: string, possessiveCapital: string, reflexive: string, isPlural: boolean }}
  */
 export function getPronounTokens(student, pronounMode = 'preferred') {
-  // If preferredName matches the official roster firstName case-insensitively,
-  // always prefer the properly-cased roster firstName.
   let resolvedFirst = ''
   const rosterFirst = (student?.firstName || '').trim()
   const prefName = (student?.preferredName || '').trim()
@@ -79,7 +85,6 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
     resolvedFirst = rosterFirst || 'The student'
   }
 
-  // Ensure first character is always capitalized as a safety measure
   const firstName = resolvedFirst
     ? resolvedFirst.charAt(0).toUpperCase() + resolvedFirst.slice(1)
     : 'The student'
@@ -139,7 +144,6 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
     }
   }
 
-  // Default to neutral / they
   if (pronounMode === 'preferred') {
     return {
       name: firstName,
@@ -153,7 +157,6 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
     }
   }
 
-  // Fallback to name-only if no pronouns detected
   return {
     name: firstName,
     subject: firstName,
@@ -166,9 +169,9 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
   }
 }
 
-// ─── Sentence Matrix (Ontario Growing Success Bank) ──────────────────────────
+// ─── Grammar & Department Utilities ──────────────────────────────────────────
 
-const GERUND_START_REGEX = /^(analyzing|analysing|evaluating|investigating|solving|explaining|describing|comparing|identifying|calculating|determining|constructing|designing|conducting|compiling|communicating|applying|modeling|modelling|predicting|measuring|interpreting|formulating|using|selecting|drawing|verifying|assessing|adding|subtracting|multiplying|dividing|composing|decomposing|creating|exploring|demonstrating|representing|classifying|examining|resolving|mapping|building)\b/i
+const GERUND_START_REGEX = /^(analyzing|analysing|evaluating|investigating|solving|explaining|describing|comparing|identifying|calculating|determining|constructing|designing|conducting|compiling|communicating|applying|modeling|modelling|predicting|measuring|interpreting|formulating|using|selecting|drawing|verifying|assessing|adding|subtracting|multiplying|dividing|composing|decomposing|creating|exploring|demonstrating|representing|classifying|examining|resolving|mapping|building|balancing|writing|simplifying|expanding|factoring|graphing|tracing|connecting|relating|converting|diagnosing|distinguishing|preparing|debugging|translating|testing|optimizing|completing|working|finding|structuring|organizing|synthesizing)\b/i
 
 function isGerundPhrase(text) {
   return Boolean(text && GERUND_START_REGEX.test(String(text).trim()))
@@ -181,9 +184,17 @@ function getDepartmentGroup(courseCode = '') {
   return 'general'
 }
 
-/**
- * Returns strength sentence variations based on achievement level and specific task.
- */
+function v(tokens, singular, plural) {
+  return tokens?.isPlural ? plural : singular
+}
+
+function capitalizeFirst(str) {
+  const s = String(str || '').trim()
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
+}
+
+// ─── Elementary / Legacy Sentence Banks (Preserved for Elementary Mode) ──────
+
 function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) {
   const isCompact = Boolean(options?.compact)
   const dept = getDepartmentGroup(options?.courseCode)
@@ -191,12 +202,10 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
   const isMath = dept === 'math'
   const cleanTask = formatCurriculumTopic(taskName || 'course learning goals')
   const isGerund = isGerundPhrase(cleanTask)
-  const capTask = isGerund ? (cleanTask.charAt(0).toUpperCase() + cleanTask.slice(1)) : ''
+  const capTask = isGerund ? capitalizeFirst(cleanTask) : ''
   const whenTask = isGerund ? cleanTask : makeGerund(cleanTask)
   const onTask = isGerund ? `when ${cleanTask}` : `on ${cleanTask}`
 
-  // When overall mark is below standard (Level R or 1), even a high-scoring single item
-  // must be framed as a relative strength rather than "excels with thorough insight".
   const isBelowStandard = options?.overallLevelKey === 'R' || options?.overallLevelKey === '1'
   if (isBelowStandard && !['1', 'R'].includes(level.key)) {
     const relList = isCompact
@@ -234,11 +243,7 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} excels with thorough insight, particularly when ${whenTask}.`,
       `${inquiryContext}, ${tokens.name} shows thorough understanding when ${whenTask}.`,
       `${tokens.name} applies critical thinking skills with thorough insight, particularly ${onTask}.`,
-      `${problemContext}, ${tokens.name} exhibits thorough precision when ${whenTask}.`,
-      `${tokens.name} brings sophisticated analytical depth to ${cleanTask}.`,
-      `${evalContext}, ${tokens.name} consistently achieves at an exceptional standard when ${whenTask}.`,
-      `Strong conceptual mastery is evident as ${tokens.name} excels ${onTask}.`,
-      `${tokens.name} synthesizes complex ideas with remarkable clarity when ${whenTask}.`
+      `${problemContext}, ${tokens.name} exhibits thorough precision when ${whenTask}.`
     ],
     '4': [
       isGerund
@@ -246,11 +251,7 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} excels with a high degree of skill when ${whenTask}.`,
       `During classroom inquiries, ${tokens.name} applies concepts with thorough consistency when ${whenTask}.`,
       `${tokens.name} exhibits commendable analytical skill and consistency, particularly ${onTask}.`,
-      `${problemContext}, ${tokens.name} applies learned skills with considerable precision when ${whenTask}.`,
-      `${tokens.name} tackles ${cleanTask} with strong conceptual accuracy and confidence.`,
-      `${evalContext}, ${tokens.name} consistently produces high-quality work when ${whenTask}.`,
-      `Well-developed reasoning is evident in ${tokens.name}'s work ${onTask}.`,
-      `${tokens.name} works with notable precision and independence when ${whenTask}.`
+      `${evalContext}, ${tokens.name} consistently produces high-quality work when ${whenTask}.`
     ],
     '3': [
       isGerund
@@ -258,11 +259,7 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} shows competent understanding and solid skills when ${whenTask}.`,
       `During unit tasks, ${tokens.name} applies core course concepts reliably when ${whenTask}.`,
       `${tokens.name} produces good quality work and communicates ideas clearly when ${whenTask}.`,
-      `In classroom evaluations, ${tokens.name} demonstrates sound capability when ${whenTask}.`,
-      `${tokens.name} grasps key principles and works steadily ${onTask}.`,
-      `${evalContext}, ${tokens.name} meets expectations reliably when ${whenTask}.`,
-      `Solid foundational comprehension supports ${tokens.name}'s performance in ${cleanTask}.`,
-      `${tokens.name} approaches ${cleanTask} with steady competence and clear organization.`
+      `${evalContext}, ${tokens.name} meets expectations reliably when ${whenTask}.`
     ],
     '2': [
       isGerund
@@ -270,85 +267,26 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} shows developing understanding of key concepts in ${cleanTask}.`,
       `With guided practice, ${tokens.name} demonstrates emerging capability when ${whenTask}.`,
       `${tokens.name} is making steady progress in foundational skills, showing promise when ${whenTask}.`,
-      `During classroom activities, ${tokens.name} displays developing capability ${onTask}, though consistency varies.`,
-      `${tokens.name} is building confidence with core ideas when ${whenTask}.`,
-      `${evalContext}, ${tokens.name} grasps basic principles in ${cleanTask} with occasional prompts.`,
-      `Growing familiarity with course expectations is evident when ${tokens.name} works ${onTask}.`,
-      `${tokens.name} applies fundamental strategies with developing accuracy when ${whenTask}.`
+      `${tokens.name} is building confidence with core ideas when ${whenTask}.`
     ],
     '1': [
       `With ongoing teacher support, ${tokens.name} is working to develop foundational skills in ${cleanTask}.`,
       `During class inquiries, ${tokens.name} shows emerging familiarity when ${whenTask} with structured guidance.`,
-      `${tokens.name} is working to apply basic principles, though ${cleanTask} remains challenging.`,
       `${tokens.name} benefits from structured scaffolding to build confidence when ${whenTask}.`,
-      `Guided examples help ${tokens.name} engage with essential concepts when ${whenTask}.`,
-      `${tokens.name} is beginning to recognize key patterns in ${cleanTask} with regular check-ins.`
+      `Guided examples help ${tokens.name} engage with essential concepts when ${whenTask}.`
     ],
     'R': [
       `With direct teacher guidance, ${tokens.name} is working to build foundational understanding when ${whenTask}.`,
       `With structured scaffolding, ${tokens.name} is developing familiarity with core concepts in ${cleanTask}.`,
-      `With guided practice, ${tokens.name} is beginning to engage with essential expectations in ${cleanTask}.`,
       `Through step-by-step support, ${tokens.name} is working toward foundational skills in ${cleanTask}.`,
-      `One-on-one prompting helps ${tokens.name} approach basic tasks in ${cleanTask}.`,
       `${tokens.name} is currently building entry-level familiarity when ${whenTask}.`
     ]
   }
 
-  const compactTemplates = {
-    '4+': [
-      `${tokens.name} excels with thorough insight when ${whenTask}.`,
-      `${tokens.name} shows a thorough understanding when ${whenTask}.`,
-      `In inquiry tasks, ${tokens.name} works with thorough insight when ${whenTask}.`,
-      `${tokens.name} brings exceptional analytical depth to ${cleanTask}.`,
-      `Strong mastery is evident as ${tokens.name} excels ${onTask}.`,
-      `${tokens.name} synthesizes ideas with remarkable clarity when ${whenTask}.`
-    ],
-    '4': [
-      `${tokens.name} excels when ${whenTask}.`,
-      `${tokens.name} shows strong capability and high effectiveness when ${whenTask}.`,
-      `${tokens.name} consistently applies learned concepts with thorough skill when ${whenTask}.`,
-      `During class inquiries, ${tokens.name} works with commendable precision when ${whenTask}.`,
-      `${tokens.name} tackles ${cleanTask} with notable accuracy and confidence.`,
-      `${evalContext}, ${tokens.name} produces high-quality work when ${whenTask}.`
-    ],
-    '3': [
-      `${tokens.name} shows competent understanding and solid skills when ${whenTask}.`,
-      `${tokens.name} applies core course concepts reliably when ${whenTask}.`,
-      `In class activities, ${tokens.name} demonstrates sound capability when ${whenTask}.`,
-      `${tokens.name} grasps key principles and works steadily ${onTask}.`,
-      `${tokens.name} meets course expectations reliably when ${whenTask}.`,
-      `${tokens.name} approaches ${cleanTask} with clear organization and competence.`
-    ],
-    '2': [
-      `${tokens.name} shows developing understanding when ${whenTask}.`,
-      `With guided practice, ${tokens.name} displays steady progress when ${whenTask}.`,
-      `${tokens.name} is building foundational skills in ${cleanTask}.`,
-      `${tokens.name} applies basic strategies with emerging accuracy when ${whenTask}.`,
-      `Growing familiarity is evident when ${tokens.name} works ${onTask}.`
-    ],
-    '1': [
-      `With regular guidance, ${tokens.name} is developing basic skills in ${cleanTask}.`,
-      `${tokens.name} shows emerging familiarity when ${whenTask} with support.`,
-      `Guided examples help ${tokens.name} engage with ${cleanTask}.`,
-      `${tokens.name} is building foundational confidence when ${whenTask}.`
-    ],
-    'R': [
-      `With directed support, ${tokens.name} is working to grasp core concepts in ${cleanTask}.`,
-      `With structured guidance, ${tokens.name} is building foundational skills in ${cleanTask}.`,
-      `Step-by-step prompting helps ${tokens.name} engage with ${cleanTask}.`,
-      `${tokens.name} is building entry-level familiarity when ${whenTask}.`
-    ]
-  }
-
-  const templates = isCompact ? compactTemplates : standardTemplates
-  const list = templates[level.key] || templates['3']
-  const idx = Math.abs(variant) % list.length
-  return list[idx]
+  const list = standardTemplates[level.key] || standardTemplates['3']
+  return list[Math.abs(variant) % list.length]
 }
 
-/**
- * Returns learning skills sentence variations.
- */
 function getWorkHabitPhrases(tokens, learningSkills = {}, variant = 0, options = {}) {
   const isCompact = Boolean(options?.compact)
   const skills = learningSkills || {}
@@ -364,8 +302,8 @@ function getWorkHabitPhrases(tokens, learningSkills = {}, variant = 0, options =
   if (isCompact) {
     if (isStrong && !needsWork) {
       const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'work' : 'works'} diligently and ${tokens.isPlural ? 'collaborate' : 'collaborates'} constructively with peers.`,
-        `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong initiative and ${tokens.isPlural ? 'use' : 'uses'} class time effectively.`
+        `${tokens.subject} ${v(tokens, 'works', 'work')} diligently and ${v(tokens, 'collaborates', 'collaborate')} constructively with peers.`,
+        `${tokens.subject} ${v(tokens, 'demonstrates', 'demonstrate')} strong initiative and ${v(tokens, 'uses', 'use')} class time effectively.`
       ]
       return list[Math.abs(variant) % list.length]
     }
@@ -377,25 +315,25 @@ function getWorkHabitPhrases(tokens, learningSkills = {}, variant = 0, options =
       return list[Math.abs(variant) % list.length]
     }
     const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'participate' : 'participates'} cooperatively and ${tokens.isPlural ? 'complete' : 'completes'} assigned tasks.`,
-      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} satisfactory work habits during class.`
+      `${tokens.subject} ${v(tokens, 'participates', 'participate')} cooperatively and ${v(tokens, 'completes', 'complete')} assigned tasks.`,
+      `${tokens.subject} ${v(tokens, 'demonstrates', 'demonstrate')} satisfactory work habits during class.`
     ]
     return list[Math.abs(variant) % list.length]
   }
 
   if (isStrong && !needsWork) {
     const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'work' : 'works'} diligently in class and ${tokens.isPlural ? 'collaborate' : 'collaborates'} constructively with peers.`,
-      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong initiative and consistently ${tokens.isPlural ? 'use' : 'uses'} class time effectively.`,
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} a self-directed learner who approaches independent tasks with focused dedication.`,
-      `${tokens.subject} actively ${tokens.isPlural ? 'participate' : 'participates'} in discussions and ${tokens.isPlural ? 'manage' : 'manages'} course responsibilities responsibly.`
+      `${tokens.subject} ${v(tokens, 'works', 'work')} diligently in class and ${v(tokens, 'collaborates', 'collaborate')} constructively with peers.`,
+      `${tokens.subject} ${v(tokens, 'demonstrates', 'demonstrate')} strong initiative and consistently ${v(tokens, 'uses', 'use')} class time effectively.`,
+      `${tokens.subject} ${v(tokens, 'is', 'are')} a self-directed learner who approaches independent tasks with focused dedication.`,
+      `${tokens.subject} actively ${v(tokens, 'participates', 'participate')} in discussions and ${v(tokens, 'manages', 'manage')} course responsibilities responsibly.`
     ]
     return list[Math.abs(variant) % list.length]
   }
 
   if (needsWork) {
     const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} encouraged to stay focused during independent work time to keep pace with deadlines.`,
+      `${tokens.subject} ${v(tokens, 'is', 'are')} encouraged to stay focused during independent work time to keep pace with deadlines.`,
       `${tokens.subject} would benefit from maintaining a detailed schedule and using class time more productively.`,
       `Developing more consistent organizational habits and self-advocating when questions arise will support ${tokens.possessive} progress.`,
       `Focusing on regular assignment completion and minimizing classroom distractions will foster greater success.`
@@ -403,379 +341,61 @@ function getWorkHabitPhrases(tokens, learningSkills = {}, variant = 0, options =
     return list[Math.abs(variant) % list.length]
   }
 
-  // Neutral / Balanced
   const list = [
-    `${tokens.subject} ${tokens.isPlural ? 'participate' : 'participates'} cooperatively in class activities and ${tokens.isPlural ? 'complete' : 'completes'} assigned tasks.`,
-    `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} satisfactory work habits and generally ${tokens.isPlural ? 'manage' : 'manages'} class time appropriately.`,
-    `${tokens.subject} ${tokens.isPlural ? 'work' : 'works'} well in collaborative groups and ${tokens.isPlural ? 'show' : 'shows'} positive engagement.`,
-    `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} respectful in class and ${tokens.isPlural ? 'strive' : 'strives'} to complete independent work.`
+    `${tokens.subject} ${v(tokens, 'participates', 'participate')} cooperatively in class activities and ${v(tokens, 'completes', 'complete')} assigned tasks.`,
+    `${tokens.subject} ${v(tokens, 'demonstrates', 'demonstrate')} satisfactory work habits and generally ${v(tokens, 'manages', 'manage')} class time appropriately.`,
+    `${tokens.subject} ${v(tokens, 'works', 'work')} well in collaborative groups and ${v(tokens, 'shows', 'show')} positive engagement.`,
+    `${tokens.subject} ${v(tokens, 'is', 'are')} respectful in class and ${v(tokens, 'strives', 'strive')} to complete independent work.`
   ]
   return list[Math.abs(variant) % list.length]
 }
 
-/**
- * Returns curriculum thinking, application, and inquiry variations based on achievement level
- * and pedagogical student profile focus (e.g. practical inquiry, analytical problem solving, rising trajectory, etc.).
- */
 function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {}) {
-  const isCompact = Boolean(options?.compact)
   const profileFocus = options?.profileFocus || 'curriculum_general'
 
-  if (profileFocus === 'work_habits') {
-    if (options?.mode === 'secondary') {
-      // In Ontario secondary reporting, subject comments must strictly report on curriculum
-      // expectations and Achievement Chart categories (Knowledge, Thinking, Communication, Application).
-      // Learning Skills & Work Habits are strictly prohibited from subject comment boxes.
-      const templates = isCompact ? compactTemplates : standardTemplates
-      const list = templates[level.key] || templates['3']
-      return list[Math.abs(variant) % list.length]
-    }
+  if (profileFocus === 'work_habits' && options?.mode !== 'secondary') {
     return getWorkHabitPhrases(tokens, options?.learningSkills, variant, options)
   }
 
-  const isBelowStandard = level?.key === 'R' || level?.key === '1'
-
-  // Profile-specific sentence banks (grounded in real student evidence)
-  if (profileFocus === 'modality_practical') {
-    if (isBelowStandard) {
-      const list = [
-        `While overall achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'engage' : 'engages'} more effectively during hands-on inquiry tasks.`,
-        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} stronger engagement in practical activities.`,
-        `Hands-on lab activities draw stronger participation from ${tokens.object}, even as core concepts remain developing.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'excel' : 'excels'} in hands-on inquiry and experimental lab investigations.`,
-        `In laboratory inquiries, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong practical and observational skills.`,
-        `${tokens.subject} ${tokens.isPlural ? 'follow' : 'follows'} experimental procedures methodically and ${tokens.isPlural ? 'interpret' : 'interprets'} lab data well.`,
-        `Practical lab tasks highlight ${tokens.possessive} careful observation and inquiry technique.`,
-        `${tokens.subject} ${tokens.isPlural ? 'connect' : 'connects'} hands-on observations to scientific theory effectively.`,
-        `During lab work, ${tokens.subjectLower} ${tokens.isPlural ? 'gather' : 'gathers'} accurate evidence and ${tokens.isPlural ? 'draw' : 'draws'} sound conclusions.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'excel' : 'excels'} in laboratory investigations, collecting accurate data and connecting findings to theory.`,
-      `In hands-on inquiry tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} keen observational skill and methodical lab technique.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} strong practical capability, interpreting experimental results and following protocols with precision.`,
-      `Experimental activities bring out ${tokens.possessive} strongest analytical habits, especially when recording and analyzing evidence.`,
-      `During lab investigations, ${tokens.subjectLower} ${tokens.isPlural ? 'handle' : 'handles'} apparatus carefully and ${tokens.isPlural ? 'justify' : 'justifies'} conclusions with empirical data.`,
-      `${tokens.subject} ${tokens.isPlural ? 'translate' : 'translates'} hands-on experimental observations into clear, evidence-based scientific explanations.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'modality_analytical') {
-    if (isBelowStandard) {
-      const list = [
-        `While overall achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'show' : 'shows'} stronger focus during structured problem-solving tasks.`,
-        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} greater consistency on guided analytical tasks.`,
-        `Structured calculations elicit steadier focus from ${tokens.object}, even as broader expectations remain emerging.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} analytical reasoning and multi-step problem solving effectively.`,
-        `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong quantitative problem solving and conceptual clarity.`,
-        `${tokens.subject} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step calculations logically and ${tokens.isPlural ? 'verify' : 'verifies'} results well.`,
-        `Abstract relationships and theoretical models are handled with clear precision.`,
-        `${tokens.subject} ${tokens.isPlural ? 'break' : 'breaks'} down complex quantitative problems into clear, logical steps.`,
-        `Theoretical evaluations highlight ${tokens.possessive} sharp analytical reasoning.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical reasoning, interpreting abstract relationships and applying theoretical models with precision.`,
-      `During quantitative problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} mathematical relationships and multi-step formulas with clarity.`,
-      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} theoretical principles effectively, demonstrating deep conceptual problem-solving ability.`,
-      `When tackling unfamiliar calculations, ${tokens.subjectLower} ${tokens.isPlural ? 'select' : 'selects'} appropriate formulas and ${tokens.isPlural ? 'justify' : 'justifies'} each step clearly.`,
-      `Conceptual and mathematical rigor is a clear asset in ${tokens.possessive} written problem solutions.`,
-      `${tokens.subject} ${tokens.isPlural ? 'interpret' : 'interprets'} theoretical models accurately and ${tokens.isPlural ? 'communicate' : 'communicates'} logical derivations with precision.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'trajectory_improving') {
-    if (isBelowStandard) {
-      const list = isCompact
-        ? [
-            `While achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} beginning to show growth with core concepts.`,
-            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'show' : 'shows'} recent progress on core tasks.`,
-            `While overall achievement remains below standard, recent tasks show encouraging upward momentum.`
-          ]
-        : [
-            `While overall achievement remains below the provincial standard, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} beginning to show growth when interpreting core concepts.`,
-            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'have' : 'has'} shown recent progress when explaining core relationships.`,
-            `Encouraging upward momentum is emerging in recent tasks, even as overall achievement remains below standard.`
-          ]
-      return list[Math.abs(variant) % list.length]
-    }
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} clear growth across recent units, solving multi-step problems with increasing precision.`,
-        `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} rising capability when interpreting data and explaining core relationships.`,
-        `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} theoretical principles with increasing precision and analytical clarity.`,
-        `${tokens.subject} ${tokens.isPlural ? 'refine' : 'refines'} problem-solving strategies effectively, tackling new inquiries with confidence.`,
-        `Recent assessments reflect steady upward progress in ${tokens.possessive} conceptual accuracy.`,
-        `${tokens.subject} ${tokens.isPlural ? 'build' : 'builds'} momentum unit by unit, justifying conclusions with growing clarity.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} noticeable growth across recent units, consolidating theoretical principles with increasing accuracy.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} rising capability in analyzing complex scenarios and communicating logical problem-solving steps.`,
-      `${tokens.subject} ${tokens.isPlural ? 'refine' : 'refines'} investigative methods effectively, approaching multi-step inquiries with growing independence.`,
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with increasing precision when solving unfamiliar problems.`,
-      `Steady improvement across the term is evident as ${tokens.subjectLower} ${tokens.isPlural ? 'connect' : 'connects'} concepts with greater confidence.`,
-      `Recent evaluations show meaningful gains in how ${tokens.subjectLower} ${tokens.isPlural ? 'structure' : 'structures'} reasoning and ${tokens.isPlural ? 'verify' : 'verifies'} solutions.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'consistency_high') {
-    const isScience = /^S/i.test(options?.courseCode || '')
-    const isMath = /^M/i.test(options?.courseCode || '')
-
-    if (isCompact) {
-      if (isScience) {
-        const list = [
-          `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across all scientific inquiries.`,
-          `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} scientific conventions and formulas with dependable accuracy.`,
-          `${tokens.subject} consistently ${tokens.isPlural ? 'connect' : 'connects'} experimental observations to theory with clear reasoning.`,
-          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step inquiry problems with dependable precision.`,
-          `Across labs and tests, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} a high standard of analytical clarity.`,
-          `${tokens.subject} ${tokens.isPlural ? 'justify' : 'justifies'} scientific conclusions with steady precision and proper terminology.`
-        ]
-        return list[Math.abs(variant) % list.length]
-      }
-      if (isMath) {
-        const list = [
-          `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-organized solutions across multi-step mathematical tasks.`,
-          `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} formulas and algebraic conventions with dependable accuracy.`,
-          `${tokens.subject} consistently ${tokens.isPlural ? 'verify' : 'verifies'} intermediate calculations with clear logical steps.`,
-          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and precision.`,
-          `Across unit assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} clear, well-justified algebraic work.`,
-          `${tokens.subject} ${tokens.isPlural ? 'translate' : 'translates'} word problems into accurate mathematical models reliably.`
-        ]
-        return list[Math.abs(variant) % list.length]
-      }
-      const list = [
-        `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across all unit tasks.`,
-        `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned methods and conventions with dependable accuracy.`,
-        `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} multi-step solutions with clear, logical reasoning.`,
-        `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and thorough reasoning.`,
-        `Across course assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} steady analytical quality.`,
-        `${tokens.subject} ${tokens.isPlural ? 'support' : 'supports'} conclusions with well-organized evidence across units.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-
-    if (isScience) {
-      const list = [
-        `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} thorough, accurate work across diverse laboratory and classroom inquiries.`,
-        `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} dependable precision when applying scientific formulas, conventions, and theoretical models.`,
-        `${tokens.subject} consistently ${tokens.isPlural ? 'connect' : 'connects'} experimental observations to scientific principles with clear analytical reasoning.`,
-        `During problem solving and inquiry, ${tokens.subjectLower} ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly and ${tokens.isPlural ? 'apply' : 'applies'} core principles with dependable accuracy.`,
-        `Across both theoretical and practical tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} a high standard of scientific communication.`,
-        `${tokens.subject} ${tokens.isPlural ? 'integrate' : 'integrates'} data analysis and conceptual theory seamlessly across unit evaluations.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-
-    if (isMath) {
-      const list = [
-        `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-organized solutions across multi-step mathematical problems.`,
-        `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} dependable precision when applying mathematical formulas, algebraic rules, and conventions.`,
-        `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} calculations and ${tokens.isPlural ? 'justify' : 'justifies'} intermediate steps with clear logical reasoning.`,
-        `During quantitative problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} mathematical relationships with dependable accuracy.`,
-        `Across unit tests and tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} thoroughness and precision in every step.`,
-        `${tokens.subject} ${tokens.isPlural ? 'verify' : 'verifies'} solutions systematically and ${tokens.isPlural ? 'communicate' : 'communicates'} mathematical reasoning clearly.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-
-    const list = [
-      `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across diverse classroom inquiries.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} thorough precision when applying learned methods, conventions, and models across all units.`,
-      `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} multi-step solutions and ${tokens.isPlural ? 'explain' : 'explains'} reasoning with clarity.`,
-      `Across diverse evaluations, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with dependable accuracy and sound methodology.`,
-      `Steady, high-calibre performance characterizes ${tokens.possessive} work across both independent and inquiry tasks.`,
-      `${tokens.subject} ${tokens.isPlural ? 'maintain' : 'maintains'} clear organization and well-supported reasoning in every unit.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'category_thinking') {
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} strong critical thinking to analyze complex scenarios.`,
-        `During classroom investigations, ${tokens.subjectLower} ${tokens.isPlural ? 'evaluate' : 'evaluates'} evidence with thoughtful inquiry skills.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'formulate' : 'formulates'} thoughtful questions and ${tokens.isPlural ? 'evaluate' : 'evaluates'} complex concepts with sound critical thinking.`,
-      `During classroom investigations, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} inquiry skills to analyze multi-faceted problems systematically.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'category_communication') {
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning clearly using appropriate technical terminology.`,
-        `In technical explanations, ${tokens.subjectLower} ${tokens.isPlural ? 'express' : 'expresses'} solution steps with precision and clarity.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'communicate' : 'communicates'} solution pathways clearly, using appropriate terminology, conventions, and units.`,
-      `In written and technical explanations, ${tokens.subjectLower} ${tokens.isPlural ? 'articulate' : 'articulates'} reasoning with precision and structural clarity.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'category_application') {
-    if (isCompact) {
-      const list = [
-        `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} learned concepts to practical real-world applications.`,
-        `When solving problems, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} course concepts to authentic contexts.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `${tokens.subject} ${tokens.isPlural ? 'connect' : 'connects'} classroom theory to practical, real-world contexts and technological applications effectively.`,
-      `When presented with authentic scenarios, ${tokens.subjectLower} ${tokens.isPlural ? 'transfer' : 'transfers'} learned principles with sound insight.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  if (profileFocus === 'qualitative_triangulation') {
-    if (isCompact) {
-      const list = [
-        `Through classroom dialogue and observation, ${tokens.name} articulates understanding clearly.`,
-        `Through class conversations, ${tokens.name} explains reasoning and grasps core concepts effectively.`
-      ]
-      return list[Math.abs(variant) % list.length]
-    }
-    const list = [
-      `Through active classroom dialogue and observation, ${tokens.name} articulates understanding and explains concepts effectively.`,
-      `In classroom discussions and inquiries, ${tokens.name} contributes thoughtful ideas and explains reasoning clearly.`
-    ]
-    return list[Math.abs(variant) % list.length]
-  }
-
-  // General Ontario Achievement Chart Level-Calibrated Sentences
   const standardTemplates = {
     '4+': [
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning with precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'evaluate' : 'evaluates'} experimental evidence and ${tokens.isPlural ? 'interpret' : 'interprets'} complex theoretical models with precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} concepts effectively and ${tokens.isPlural ? 'express' : 'expresses'} mathematical and scientific reasoning with clarity.`,
-      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'analyze' : 'analyzes'} data insightfully and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts.`,
-      `Across unfamiliar tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'transfer' : 'transfers'} theoretical principles seamlessly and ${tokens.isPlural ? 'justify' : 'justifies'} conclusions thoroughly.`,
-      `${tokens.subject} ${tokens.isPlural ? 'combine' : 'combines'} sharp conceptual insight with clear, well-structured technical communication.`
+      `${tokens.subject} ${v(tokens, 'applies', 'apply')} critical thinking skills to analyze complex scenarios and ${v(tokens, 'communicates', 'communicate')} reasoning with precision.`,
+      `${tokens.subject} ${v(tokens, 'evaluates', 'evaluate')} evidence and ${v(tokens, 'interprets', 'interpret')} complex theoretical models with precision.`
     ],
     '4': [
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned concepts reliably to multi-step problems and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning clearly.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical capability during classroom inquiries and investigation tasks.`,
-      `During problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} appropriate conventions and ${tokens.isPlural ? 'explain' : 'explains'} methodology clearly.`,
-      `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} theoretical concepts to practical contexts and experimental results.`,
-      `In unit assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step reasoning logically and ${tokens.isPlural ? 'verify' : 'verifies'} conclusions.`,
-      `${tokens.subject} ${tokens.isPlural ? 'interpret' : 'interprets'} course data accurately and ${tokens.isPlural ? 'support' : 'supports'} findings with clear evidence.`
+      `${tokens.subject} ${v(tokens, 'applies', 'apply')} learned concepts reliably to multi-step problems and ${v(tokens, 'communicates', 'communicate')} reasoning clearly.`,
+      `${tokens.subject} ${v(tokens, 'exhibits', 'exhibit')} strong analytical capability during classroom inquiries and investigation tasks.`
     ],
     '3': [
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} core procedures with competence, communicating intermediate solution steps clearly.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} sound problem-solving skills during classroom investigations and evaluations.`,
-      `When tackling multi-step tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
-      `${tokens.subject} ${tokens.isPlural ? 'explain' : 'explains'} foundational procedures and reasoning with sound clarity.`,
-      `Across unit activities, ${tokens.subjectLower} ${tokens.isPlural ? 'connect' : 'connects'} core ideas accurately and ${tokens.isPlural ? 'follow' : 'follows'} standard conventions.`,
-      `${tokens.subject} ${tokens.isPlural ? 'select' : 'selects'} appropriate strategies for routine problems and ${tokens.isPlural ? 'present' : 'presents'} organized work.`
+      `${tokens.subject} ${v(tokens, 'applies', 'apply')} core procedures with competence, communicating intermediate solution steps clearly.`,
+      `${tokens.subject} ${v(tokens, 'shows', 'show')} sound problem-solving skills during classroom investigations and evaluations.`
     ],
     '2': [
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures to multi-step problem solving.`,
-      `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships and ${tokens.isPlural ? 'communicate' : 'communicates'} steps with emerging accuracy.`,
-      `${tokens.subject} ${tokens.isPlural ? 'display' : 'displays'} emerging capability during inquiry tasks, though calculations require verification.`,
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} continuing to build confidence when explaining reasoning and applying methods to new problems.`,
-      `In structured class tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} basic formulas with developing independence.`,
-      `${tokens.subject} ${tokens.isPlural ? 'benefit' : 'benefits'} from step-by-step checklists when organizing multi-part explanations.`
+      `${tokens.subject} ${v(tokens, 'shows', 'show')} developing consistency when applying standard procedures to multi-step problem solving.`,
+      `With guided practice, ${tokens.subjectLower} ${v(tokens, 'interprets', 'interpret')} core relationships with emerging accuracy.`
     ],
     '1': [
-      `With ongoing teacher support, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} working to apply basic principles and complete multi-step solutions.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} emerging capability with core procedures, though additional practice is required to communicate reasoning clearly.`,
-      `During inquiry and problem-solving activities, ${tokens.subjectLower} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to select and apply correct methods.`,
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} developing foundational familiarity with course formulas and terminology.`,
-      `Guided templates help ${tokens.object} break basic problems into manageable steps.`,
-      `${tokens.subject} ${tokens.isPlural ? 'need' : 'needs'} regular check-ins to verify foundational steps and terminology.`
+      `With ongoing teacher support, ${tokens.subjectLower} ${v(tokens, 'is', 'are')} working to apply basic principles and complete multi-step solutions.`,
+      `Guided templates help ${tokens.object} break basic problems into manageable steps.`
     ],
     'R': [
-      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} comprehensive guidance to interpret core concepts and complete basic problem-solving procedures.`,
-      `Substantial support is needed to understand fundamental curriculum terminology and apply standard methods.`,
-      `At this stage, ${tokens.subjectLower} ${tokens.isPlural ? 'struggle' : 'struggles'} to demonstrate consistent application of essential course expectations.`,
-      `Extensive review of foundational material is necessary to build required curriculum competencies.`,
-      `Structured one-on-one scaffolding is essential to help ${tokens.object} engage with core expectations.`,
-      `Consistent practice with foundational examples is needed to establish basic course skills.`
+      `${tokens.subject} ${v(tokens, 'requires', 'require')} comprehensive guidance to interpret core concepts and complete basic procedures.`,
+      `Structured one-on-one scaffolding is essential to help ${tokens.object} engage with core expectations.`
     ]
   }
 
-  const compactTemplates = {
-    '4+': [
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios with precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong problem-solving strategies and clear insight.`,
-      `${tokens.subject} ${tokens.isPlural ? 'transfer' : 'transfers'} theoretical models seamlessly to unfamiliar problems.`,
-      `${tokens.subject} ${tokens.isPlural ? 'justify' : 'justifies'} complex conclusions with clear, concise evidence.`
-    ],
-    '4': [
-      `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with conceptual clarity and analytical precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical capability during classroom inquiries.`,
-      `${tokens.subject} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step reasoning logically and ${tokens.isPlural ? 'verify' : 'verifies'} solutions.`,
-      `${tokens.subject} ${tokens.isPlural ? 'connect' : 'connects'} theoretical principles to practical data accurately.`
-    ],
-    '3': [
-      `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} standard multi-step problems reliably and ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} sound problem-solving skills during classroom tasks.`,
-      `${tokens.subject} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
-      `${tokens.subject} ${tokens.isPlural ? 'present' : 'presents'} organized steps and clear foundational explanations.`
-    ],
-    '2': [
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures.`,
-      `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships with emerging accuracy.`,
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} basic methods with growing confidence in structured tasks.`,
-      `Verifying intermediate steps will strengthen ${tokens.possessive} problem-solving accuracy.`
-    ],
-    '1': [
-      `With ongoing guidance, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} developing familiarity with core formulas.`,
-      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to apply basic methods.`,
-      `Guided templates help ${tokens.object} organize foundational problem steps.`,
-      `Regular check-ins support ${tokens.possessive} grasp of core terminology.`
-    ],
-    'R': [
-      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} comprehensive guidance to interpret fundamental concepts.`,
-      `Extensive review of core material is necessary to build credit competencies.`,
-      `Structured scaffolding is needed to engage with essential expectations.`,
-      `Focused review of foundational examples is essential at this stage.`
-    ]
-  }
-
-  const templates = isCompact ? compactTemplates : standardTemplates
-  const list = templates[level.key] || templates['3']
-  const idx = Math.abs(variant) % list.length
-  return list[idx]
+  const list = standardTemplates[level.key] || standardTemplates['3']
+  return list[Math.abs(variant) % list.length]
 }
 
 /**
  * Condenses overly long compound curriculum topics for natural Next Step phrasing.
- * If a topic is a 3-part list (e.g. "A, B, and C") and exceeds 60 characters,
- * condenses to "A and C" so Sentence 3 remains natural and doesn't squeeze out Sentence 2.
  */
 export function condenseTopicForNextStep(task) {
   if (!task || typeof task !== 'string') return ''
-  let t = task.trim()
+  const t = task.trim()
   if (t.length <= 60) return t
 
-  // If 3-part list: "A, B, and C" -> "A and C"
   const threePartMatch = t.match(/^(.*?)(?:,\s*[^,]+),\s*and\s+(.*)$/i)
   if (threePartMatch && threePartMatch[1] && threePartMatch[2]) {
     const candidate = `${threePartMatch[1]} and ${threePartMatch[2]}`.trim()
@@ -785,14 +405,8 @@ export function condenseTopicForNextStep(task) {
   return t
 }
 
-/**
- * Returns actionable next step variations based on level and specific growth task.
- * For Final reports, next steps pivot forward to senior course pathways, future studies,
- * or credit recovery (under Ontario Growing Success & SCDSB guidelines).
- */
 function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options = {}) {
   const isFinal = typeof options === 'boolean' ? options : Boolean(options?.isFinal)
-  const isCompact = Boolean(options?.compact)
   const dept = getDepartmentGroup(options?.courseCode)
   const isStem = dept === 'science' || dept === 'math'
   const formattedTask = formatCurriculumTopic(growthTaskName || '')
@@ -801,259 +415,85 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
 
   const isGeneric = !cleanTask || cleanTask === 'multi-step problem solving' || cleanTask === 'course learning goals' || isGenericTitle(cleanTask)
   const isGerund = isGerundPhrase(lower)
-  const isEvaluation = /\b(test|quiz|exam|checkpoint|evaluation)\b/i.test(lower)
-  const isLab = /\b(lab|inquiry|investigation|experiment)\b/i.test(lower)
+  const inTopic = isGeneric ? '' : (isGerund ? ` when ${cleanTask}` : ` in ${cleanTask}`)
+  const relatedTopic = isGeneric ? '' : (isGerund ? ` focused on ${cleanTask}` : ` related to ${cleanTask}`)
+  const focusedTopic = isGeneric ? '' : (isGerund ? ` focused on ${cleanTask}` : ` in ${cleanTask}`)
 
-  // Natural grammar-adapted modifiers:
-  // inTopic: used after solutions, justifications ("in kinematics", "when analyzing motion")
-  let inTopic = ''
-  // relatedTopic: used after problems, practice, concepts ("related to kinematics", "focused on analyzing motion")
-  let relatedTopic = ''
-  // onTopic: used after practice, remediation ("on unit evaluations", "in kinematics", "when analyzing motion")
-  let onTopic = ''
-  // focusedTopic: used after nouns like "extra help", "sample exercises", "tutorial support"
-  let focusedTopic = ''
-
-  if (!isGeneric) {
-    if (isGerund) {
-      inTopic = ` when ${cleanTask}`
-      relatedTopic = ` focused on ${cleanTask}`
-      onTopic = ` when ${cleanTask}`
-      focusedTopic = ` focused on ${cleanTask}`
-    } else if (isEvaluation) {
-      inTopic = ` on unit evaluations`
-      relatedTopic = ` for upcoming evaluations on ${cleanTask}`
-      onTopic = ` on upcoming evaluations on ${cleanTask}`
-      focusedTopic = ` for upcoming evaluations on ${cleanTask}`
-    } else if (isLab) {
-      inTopic = ` during investigations in ${cleanTask}`
-      relatedTopic = ` during investigations in ${cleanTask}`
-      onTopic = ` in laboratory investigations`
-      focusedTopic = ` during investigations in ${cleanTask}`
-    } else {
-      // Academic concept or topic noun phrase (e.g. "sustainable ecosystems", "kinematics", "quadratic relations")
-      inTopic = ` in ${cleanTask}`
-      relatedTopic = ` related to ${cleanTask}`
-      onTopic = ` in ${cleanTask}`
-      focusedTopic = ` in ${cleanTask}`
-    }
-  }
-
-  // Standard term / midterm templates
   const termTemplates = {
     '4+': [
-      `Moving forward, ${tokens.name} is encouraged to explore extension questions to deepen conceptual understanding.`,
-      `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions${inTopic}.`,
-      `Tackling novel, non-routine problems${relatedTopic} will further enhance ${tokens.possessive} critical insight.`,
-      `For ongoing growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with independent enrichment inquiries${inTopic}.`,
-      `Exploring open-ended applications${focusedTopic} will allow ${tokens.name} to stretch ${tokens.possessive} analytical thinking.`,
-      `Next, ${tokens.name} can deepen mastery by connecting theoretical models to unfamiliar scenarios${inTopic}.`
+      `Moving forward, ${tokens.name} is encouraged to explore extension questions${focusedTopic} to deepen conceptual understanding.`,
+      `Tackling novel, non-routine problems${relatedTopic} will further enhance ${tokens.possessive} critical insight.`
     ],
     '4': [
       isStem
         ? `Utilizing a structured problem-solving template will support ${tokens.name} in organizing multi-step solutions${inTopic}.`
         : `Utilizing a structured planning organizer will support ${tokens.name} in organizing detailed responses${inTopic}.`,
-      `To reach the highest standard, ${tokens.subjectLower} should continue refining written justifications and verifying ${isStem ? 'multi-step solutions' : 'supporting evidence'}${inTopic}.`,
-      `Continuing to practice ${isStem ? 'multi-step problem solving' : 'analytical writing and synthesis'}${relatedTopic} will further consolidate understanding.`,
-      `For future assessments, ${tokens.name} should ensure thorough explanations${isStem ? ' and clear units' : ' and clear supporting details'} accompany ${isStem ? 'solutions' : 'responses'}${inTopic}.`,
-      `Double-checking assumptions and ${isStem ? 'intermediate calculations' : 'supporting evidence'}${focusedTopic} will help ${tokens.name} push toward Level 4+ consistency.`,
-      `Next, ${tokens.subjectLower} should focus on articulating full reasoning${inTopic} on complex, multi-part tasks.`
+      `To reach the highest standard, ${tokens.subjectLower} should continue refining written justifications${inTopic}.`
     ],
     '3': [
       isStem
-        ? `Utilizing a step-by-step problem-solving ledger will help ${tokens.name} organize variables and calculations${inTopic}.`
-        : `Utilizing a step-by-step revision checklist will help ${tokens.name} organize ideas and supporting details${inTopic}.`,
-      `Moving forward, ${tokens.name} should practice ${isStem ? 'multi-step problem solving' : 'structured analysis and review'}${relatedTopic}.`,
-      `Using a structured reference checklist will support ${tokens.name} in verifying ${isStem ? 'intermediate steps' : 'key criteria'}${inTopic}.`,
-      `For continued improvement, consistent completion of practice ${isStem ? 'problems' : 'tasks'}${relatedTopic || ` related to ${cleanTask || 'core concepts'}`} is recommended.`,
-      `Reviewing worked examples${focusedTopic} before unit evaluations will strengthen ${tokens.possessive} accuracy.`,
-      `Next, ${tokens.name} would benefit from checking ${isStem ? 'units, formulas, and final steps' : 'clarity and supporting details'}${inTopic}.`
+        ? `Utilizing a step-by-step checklist will help ${tokens.name} verify calculations${inTopic}.`
+        : `Utilizing a step-by-step revision checklist will help ${tokens.name} organize ideas${inTopic}.`,
+      `Moving forward, ${tokens.name} should practice ${isStem ? 'multi-step problem solving' : 'structured analysis'}${relatedTopic}.`
     ],
     '2': [
       isStem
-        ? `Utilizing a variable-mapping organizer and reference checklist will help ${tokens.name} organize solution steps${inTopic}.`
-        : `Utilizing a structured graphic organizer and reference checklist will help ${tokens.name} organize responses${inTopic}.`,
-      `With guided practice, ${tokens.subjectLower} should focus on applying structured ${isStem ? 'problem-solving frameworks and verifying calculations' : 'planning frameworks and checking key criteria'}${onTopic}.`,
-      `Using a step-by-step ${isStem ? 'problem-solving template' : 'planning template'} and seeking timely extra help${focusedTopic} will build confidence.`,
-      `Regular review of core concepts and completing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`,
-      `Breaking multi-part tasks into smaller checkpoints${focusedTopic} will help ${tokens.name} build steadier accuracy.`,
-      `Seeking early feedback on practice ${isStem ? 'problems' : 'drafts'}${focusedTopic} is recommended to close conceptual gaps.`
+        ? `Utilizing a structured reference checklist will help ${tokens.name} organize solution steps${inTopic}.`
+        : `Utilizing a structured graphic organizer will help ${tokens.name} organize responses${inTopic}.`,
+      `Regular review of core concepts and completing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`
     ],
     '1': [
       `Utilizing a structured step-by-step organizer and attending regular extra help${focusedTopic} will support ${tokens.name}.`,
-      `To develop consistency, ${tokens.subjectLower} should use guided templates to organize foundational ${isStem ? 'procedures' : 'concepts'}${inTopic}.`,
-      `Regular review of core concept notes and guided ${isStem ? 'calculation practice' : 'skill practice'}${focusedTopic} will support ongoing progress.`,
-      `Consistent completion of practice tasks and guided review${relatedTopic} will help ${tokens.name} build required competencies.`,
-      `Working through foundational examples with teacher feedback${focusedTopic} will help ${tokens.name} gain confidence.`,
-      `Attending targeted tutorial sessions${focusedTopic} is strongly encouraged to strengthen essential skills.`
-    ],
-    'R': [
-      `Completing missing summative work and reviewing core concepts${focusedTopic} are essential to build toward credit expectations.`,
-      `Consistent completion of foundational practice and attending extra help${focusedTopic} will support progress toward the provincial standard.`,
-      `Reviewing core expectations and submitting outstanding evaluations${focusedTopic} will help ${tokens.name} work toward credit completion.`,
-      `Utilizing guided review materials and attending regular tutorial support${focusedTopic} will help ${tokens.name} strengthen essential competencies.`,
-      `Prioritizing overdue unit tasks and seeking structured extra help${focusedTopic} will be critical for ${tokens.possessive} progress.`,
-      `Targeted remediation on foundational skills${focusedTopic} is needed to move toward the provincial standard.`
-    ]
-  }
-
-  const compactTermTemplates = {
-    '4+': [
-      `Moving forward, ${tokens.name} is encouraged to tackle extension questions${focusedTopic}.`,
-      `To extend learning, ${tokens.subjectLower} should seek opportunities to justify complex conclusions${inTopic}.`,
-      `Exploring non-routine problems${relatedTopic} will further sharpen ${tokens.possessive} critical insight.`,
-      `Next, ${tokens.name} can deepen mastery through independent enrichment${focusedTopic}.`
-    ],
-    '4': [
-      isStem
-        ? `Utilizing a structured template will support ${tokens.name} in organizing multi-step solutions${inTopic}.`
-        : `Utilizing a structured organizer will support ${tokens.name} in organizing detailed responses${inTopic}.`,
-      `To reach the highest level, ${tokens.subjectLower} should refine written justifications${isStem ? ' and verify solutions' : ''}${inTopic}.`,
-      `Practicing multi-part ${isStem ? 'calculations' : 'responses'}${relatedTopic} will further consolidate understanding.`,
-      `Verifying units and full reasoning${inTopic} will help ${tokens.name} reach Level 4+ consistency.`,
-      `Double-checking assumptions${focusedTopic} will strengthen ${tokens.possessive} analytical precision.`,
-      `Next, ${tokens.subjectLower} can push toward Level 4+ by justifying complex steps${inTopic}.`
-    ],
-    '3': [
-      isStem
-        ? `Utilizing a step-by-step problem ledger will help ${tokens.name} verify intermediate calculations${inTopic}.`
-        : `Utilizing a structured checklist will help ${tokens.name} refine written responses${inTopic}.`,
-      `Moving forward, ${tokens.name} should complete regular practice ${isStem ? 'problems' : 'tasks'}${relatedTopic}.`,
-      `Reviewing worked examples${focusedTopic} will strengthen ${tokens.possessive} evaluation accuracy.`,
-      `Using a reference checklist${inTopic} will help ${tokens.name} verify key steps reliably.`,
-      `Consistent practice${relatedTopic} will build stronger fluency before evaluations.`,
-      `Next, ${tokens.name} should check ${isStem ? 'formulas, units, and final steps' : 'supporting evidence'}${inTopic}.`
-    ],
-    '2': [
-      `Focusing on structured ${isStem ? 'problem-solving frameworks' : 'planning frameworks'} and practicing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`,
-      `Using a structured reference checklist and seeking timely extra help${focusedTopic} will build confidence.`,
-      `Regular practice and verifying ${isStem ? 'intermediate steps' : 'key details'}${inTopic} will support ${tokens.possessive} progress.`,
-      `Breaking tasks into guided checkpoints${focusedTopic} will strengthen ${tokens.possessive} consistency.`,
-      `Reviewing core notes and sample ${isStem ? 'problems' : 'responses'}${focusedTopic} will build steadier accuracy.`,
-      `Seeking early feedback on practice work${focusedTopic} will help close conceptual gaps.`
-    ],
-    '1': [
-      `Utilizing guided ${isStem ? 'problem templates' : 'review templates'} and attending regular extra help${focusedTopic} will support ${tokens.name}.`,
-      `Reviewing core concepts and practicing foundational ${isStem ? 'procedures' : 'skills'}${relatedTopic} will build consistency.`,
-      `Working through guided examples${focusedTopic} will help ${tokens.name} build core skills.`,
-      `Attending tutorial sessions${focusedTopic} is encouraged to strengthen foundational understanding.`
+      `Working through foundational examples with teacher feedback${focusedTopic} will help ${tokens.name} gain confidence.`
     ],
     'R': [
       `Completing missing summative work and reviewing core concepts${focusedTopic} will support progress toward credit expectations.`,
-      `Targeted practice and attending extra help${focusedTopic} will support ${tokens.name} toward credit completion.`,
-      `Submitting overdue evaluations and reviewing basics${focusedTopic} are essential next steps.`,
-      `Targeted remediation${focusedTopic} is needed to build toward the provincial standard.`
+      `Consistent foundational practice and attending extra help${focusedTopic} will support ${tokens.name} toward the provincial standard.`
     ]
   }
 
-  // Final report templates: Course has concluded, so next steps pivot forward to senior course
-  // pathways, subsequent studies, or credit recovery (Ontario Growing Success & SCDSB guidelines)
   const finalTemplates = {
     '4+': [
-      `Moving forward into senior coursework, ${tokens.name} is encouraged to continue exploring extension questions and independent inquiry.`,
-      `As ${tokens.name} advances to future studies, maintaining this high standard of critical insight and theoretical justification will ensure continued success.`,
-      `In subsequent senior coursework, ${tokens.name} is well prepared to tackle rigorous theoretical challenges and complex problem-solving inquiries.`,
-      `For ongoing academic growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with non-routine problem solving and conceptual synthesis.`,
-      `Carrying this strong analytical curiosity into future courses will serve ${tokens.name} well in senior studies.`
+      `Moving forward into senior coursework, ${tokens.name} is encouraged to continue exploring extension questions and independent inquiry.`
     ],
     '4': [
-      `Moving forward into senior courses, ${tokens.name} should continue utilizing structured problem-solving frameworks to tackle complex investigations.`,
-      `To excel in subsequent studies, ${tokens.subjectLower} should maintain thorough written justifications and clear unit communication.`,
-      `As ${tokens.name} progresses to higher-level coursework, practicing multi-step problem solving will sustain ${tokens.possessive} high achievement.`,
-      `In future academic studies, ${tokens.name} is encouraged to sustain this rigorous approach to inquiry and quantitative problem solving.`,
-      `Continuing to verify multi-step reasoning will support ${tokens.name}'s transition into senior-level expectations.`
+      `Moving forward into senior courses, ${tokens.name} should continue refining structured problem-solving justifications.`
     ],
     '3': [
-      `Moving forward into senior courses, ${tokens.name} is encouraged to review core problem-solving templates and verify multi-step calculations.`,
-      `In future studies, maintaining structured review and practicing multi-step problem solving will support ${tokens.possessive} progress.`,
-      `Moving forward into subsequent studies, consistent application of structured methods will reinforce ${tokens.name}'s ongoing success.`,
-      `For future academic studies, ${tokens.name} should continue consolidating core concepts and seeking early clarification on complex topics.`,
-      `Building consistent review habits will serve ${tokens.name} well in subsequent studies.`
+      `Moving forward into subsequent studies, consistent review and practice${relatedTopic} will reinforce ${tokens.name}'s ongoing success.`
     ],
     '2': [
-      `Prior to enrolling in subsequent courses, ${tokens.name} is encouraged to review foundational concepts and practice multi-step calculations independently.`,
-      `In future coursework, establishing structured review routines and seeking timely clarification on challenging topics will build confidence.`,
-      `Consolidating core procedures and formula applications will be key as ${tokens.name} transitions into subsequent academic studies.`,
-      `To ensure success in future courses, ${tokens.name} would benefit from reinforcing foundational problem-solving strategies.`,
-      `Regularly revisiting core notes and seeking early tutorial support will help ${tokens.name} succeed in next year's coursework.`
+      `Prior to enrolling in subsequent courses, ${tokens.name} is encouraged to review foundational concepts${inTopic} independently.`
     ],
     '1': [
-      `Prior to advancing to subsequent courses in this subject, ${tokens.name} requires focused review of core curriculum expectations.`,
-      `To prepare for future academic pathways, ${tokens.subjectLower} should review foundational concepts and strengthen basic problem-solving procedures.`,
-      `Consistent practice with core formulas and terminology is strongly recommended before advancing to higher-level studies.`,
-      `Seeking additional tutorial support to solidify essential concepts will be critical for ${tokens.name}'s future coursework.`,
-      `A structured review of foundational skills over the break will help ${tokens.name} prepare for upcoming pathways.`
+      `Prior to advancing to subsequent courses, ${tokens.name} requires focused review of core expectations${inTopic}.`
     ],
     'R': [
-      `To work toward credit recovery, ${tokens.name} must consult with guidance to discuss remediation or summer school options.`,
-      `Enrolling in credit recovery or repeating the course is strongly recommended to establish required curriculum competencies.`,
-      `A consultation with guidance and student success is recommended to explore appropriate pathway options and credit recovery.`,
-      `To satisfy diploma requirements, ${tokens.name} should attend summer school or enroll in credit recovery to complete essential expectations.`
+      `To work toward credit recovery, ${tokens.name} should consult with guidance regarding summer school or remediation.`
     ]
   }
 
-  const compactFinalTemplates = {
-    '4+': [
-      `In senior coursework, ${tokens.name} is encouraged to explore extension questions${focusedTopic}.`,
-      `As ${tokens.name} advances to future studies, maintaining deep insight${inTopic} will ensure success.`,
-      `Carrying this strong inquiry mindset into senior courses will ensure continued excellence.`
-    ],
-    '4': [
-      `Moving forward into senior courses, ${tokens.name} should continue using structured problem frameworks${inTopic}.`,
-      `In future studies, practicing multi-step problem solving${relatedTopic} will sustain high achievement.`,
-      `Maintaining clear justifications and careful verification will support ${tokens.name} in senior courses.`
-    ],
-    '3': [
-      `To prepare for subsequent courses, ${tokens.name} should review core problem templates${inTopic}.`,
-      `In future coursework, consistent practice${relatedTopic} will reinforce ${tokens.possessive} success.`,
-      `Building steady review habits will support ${tokens.name}'s transition to subsequent studies.`
-    ],
-    '2': [
-      `Prior to subsequent courses, ${tokens.name} is encouraged to review foundational concepts${inTopic} independently.`,
-      `In future studies, establishing consistent review routines${inTopic} will build confidence.`,
-      `Seeking early clarification and practicing core procedures will aid ${tokens.name} in future courses.`
-    ],
-    '1': [
-      `Prior to advancing to subsequent courses, ${tokens.name} requires focused review${inTopic}.`,
-      `Consistent practice${relatedTopic} is strongly recommended before advancing to subsequent studies.`,
-      `Solidifying foundational skills with tutorial support will be vital for future coursework.`
-    ],
-    'R': [
-      `To work toward credit recovery, ${tokens.name} should consult with guidance regarding remediation in ${cleanTask || 'core curriculum expectations'}.`,
-      `Enrolling in credit recovery or summer school is recommended to complete core expectations in ${cleanTask || 'this subject'}.`
-    ]
-  }
-
-  const templates = isFinal
-    ? (isCompact ? compactFinalTemplates : finalTemplates)
-    : (isCompact ? compactTermTemplates : termTemplates)
+  const templates = isFinal ? finalTemplates : termTemplates
   const list = templates[level.key] || templates['3']
-  const idx = Math.abs(variant) % list.length
-  return list[idx]
+  return list[Math.abs(variant) % list.length]
 }
 
 // ─── Helpers & Sanitizers ───────────────────────────────────────────────────
 
 /**
  * Normalizes and cleans an assessment or expectation title for parent-friendly sentences.
- * Strips prefixes like "Unit 1 - ", "Ch. 2: ", trailing dates "(Oct 12)", and cleans all-caps.
  */
 export function sanitizeTaskTitle(rawTitle) {
   if (!rawTitle) return ''
   let t = String(rawTitle).trim()
 
-  // 1. Strip common prefixes: "Unit 1 - ", "Unit 2: ", "Ch. 3 - ", "Module A: "
   t = t.replace(/^(unit|ch\.|chapter|module|section|strand)\s*\d+[\s:–—-]+/i, '')
-
-  // 2. Strip trailing parenthetical dates or marks: " (Oct 12)", " [10 pts]"
   t = t.replace(/\s*[\(\[][^)\]]*(oct|nov|dec|jan|feb|mar|apr|may|jun|pts|marks|\d{1,2}\/\d{1,2})[^)\]]*[\)\]]/gi, '')
 
-  // 3. Fix all-caps titles: "FORCES LAB" -> "Forces Lab"
   if (t.length > 3 && t === t.toUpperCase() && /[A-Z]/.test(t)) {
     t = t.toLowerCase().replace(/\b\w/g, char => char.toUpperCase())
   }
 
-  // 4. Strip trailing administrative / delivery container suffixes (" - Submission", " Submission", " Dropbox", " Worksheet #2", " Activity Sheet")
   const ADMIN_CONTAINERS = /\b(?:submission|submissions|dropbox|drop\s*box|hand-in|handin|turn-in|turnin|homework|hw|worksheet|worksheets|problem\s+set|packet|sheet|sheets|check-in|checkin|draft|final\s+draft|gizmo|gizmos|activity|activities|task|tasks)\b/gi
   t = t.replace(ADMIN_CONTAINERS, ' ').replace(/\s*#?\d+\s*$/, '').replace(/[\s:–—-]+$/, '').trim()
 
@@ -1062,19 +502,14 @@ export function sanitizeTaskTitle(rawTitle) {
 
 /**
  * Normalizes a raw assessment title or curriculum topic for natural pedagogical phrasing.
- * Strips awkward leading articles, expands bare topic keywords (e.g. "Projectile" -> "projectile motion"),
- * lowercases academic concepts, and preserves proper nouns/acronyms (e.g., "Newton's laws", "1D", "2D").
  */
 export function formatCurriculumTopic(rawTitle) {
   if (!rawTitle) return ''
   let t = sanitizeTaskTitle(rawTitle)
-
-  // Strip leading articles: "the Projectile" -> "Projectile", "a Lab" -> "Lab"
   t = t.replace(/^(?:the|a|an)\s+/i, '')
 
   const lower = t.toLowerCase().trim()
 
-  // Shorthand or bare topic expansions common in Ontario secondary curriculum
   const TOPIC_EXPANSIONS = {
     'projectile': 'projectile motion',
     'projectiles': 'projectile motion',
@@ -1106,19 +541,29 @@ export function formatCurriculumTopic(rawTitle) {
     return TOPIC_EXPANSIONS[lower]
   }
 
-  // Preserve explicit evaluation titles like "1D Kinematics Test" or "Forces & Friction Lab"
   if (/\b(test|quiz|lab|exam|assignment|checkpoint|project)\b/i.test(t)) {
     return t
   }
 
-  // Otherwise, format as lowercase curriculum concept while preserving recognized proper nouns/acronyms
-  const PROPER_PRESERVE = /\b(1d|2d|3d|newton'?s?|ohm'?s?|kirchhoff'?s?|hooke'?s?|kepler'?s?|boyle'?s?|charles'?s?|snell'?s?|cartesian|pythagorean|doppler|einstein|galileo|archimedes|canada|canadian|indigenous|first nations|inuit|m[eé]tis|french|english|ontario)\b/gi
+  const PROPER_PRESERVE = /\b(1d|2d|3d|newton'?s?|ohm'?s?|kirchhoff'?s?|hooke'?s?|kepler'?s?|boyle'?s?|charles'?s?|snell'?s?|le\s+chatelier'?s?|avogadro'?s?|bohr-rutherford|bohr|rutherford|mendelian|mendel|punnett|coulomb'?s?|lorentz|lenz'?s?|planck'?s?|de\s+broglie|young'?s?|sohcahtoa|bedmas|iupac|dna|ph|stp|satp|si|salt|cartesian|pythagorean|doppler|einstein|galileo|archimedes|canada|canadian|indigenous|first nations|inuit|m[eé]tis|french|english|ontario)\b/gi
 
-  let formatted = lower.replace(PROPER_PRESERVE, match => {
+  const formatted = lower.replace(PROPER_PRESERVE, match => {
     const m = match.toLowerCase()
     if (m === '1d') return '1D'
     if (m === '2d') return '2D'
     if (m === '3d') return '3D'
+    if (m === 'dna') return 'DNA'
+    if (m === 'ph') return 'pH'
+    if (m === 'stp') return 'STP'
+    if (m === 'satp') return 'SATP'
+    if (m === 'si') return 'SI'
+    if (m === 'salt') return 'SALT'
+    if (m === 'sohcahtoa') return 'SOHCAHTOA'
+    if (m === 'bedmas') return 'BEDMAS'
+    if (m === 'iupac') return 'IUPAC'
+    if (m === 'bohr-rutherford') return 'Bohr-Rutherford'
+    if (m === 'de broglie') return 'de Broglie'
+    if (m.startsWith('le chatelier')) return 'Le Chatelier' + match.slice(12)
     return match.charAt(0).toUpperCase() + match.slice(1)
   })
 
@@ -1126,7 +571,7 @@ export function formatCurriculumTopic(rawTitle) {
 }
 
 /**
- * Checks if a title is too generic (e.g. "Quiz 1", "Lab 2", "Test 3", "Unit 1 Test", "Chapter 2 Quiz").
+ * Checks if a title is too generic (e.g. "Quiz 1", "Lab 2", "Test 3", "Unit 1 Test").
  */
 export function isGenericTitle(title) {
   if (!title) return true
@@ -1139,9 +584,6 @@ export function isGenericTitle(title) {
   return false
 }
 
-/**
- * Category Normalizer & Non-Academic Blacklist.
- */
 const CATEGORY_NORMALIZER = {
   labs: 'laboratory inquiries and experimental work',
   lab: 'laboratory inquiries and experimental work',
@@ -1175,10 +617,6 @@ export const NON_ACADEMIC_CATEGORIES = new Set([
   'learning skills'
 ])
 
-/**
- * Checks whether a category or task name represents non-academic tracking
- * (e.g. attendance, participation, homework, behavior).
- */
 export function isNonAcademicCategory(name) {
   if (!name || typeof name !== 'string') return false
   const lower = name.trim().toLowerCase()
@@ -1188,23 +626,14 @@ export function isNonAcademicCategory(name) {
   return false
 }
 
-/**
- * Determines whether an assessment should be excluded from report card comment evidence.
- * Excludes:
- * - Formative, diagnostic, or administrative tasks
- * - Tasks with 0% category weight
- * - Non-academic tasks (attendance, participation, homework, behavior)
- */
 export function isCommentExcludedAssessment(assessment, classRecord = null) {
   if (!assessment) return false
   if (isFormativeAssessment(assessment, classRecord)) return true
 
-  // Check assessment direct name or category
   if (isNonAcademicCategory(assessment.name) || isNonAcademicCategory(assessment.category)) {
     return true
   }
 
-  // Check category lookup in classRecord / gradeData
   const categories = [
     ...(classRecord?.gradebookCategories || []),
     ...(classRecord?.categories || []),
@@ -1229,12 +658,10 @@ export function makeGerund(task) {
   const clean = formatCurriculumTopic(task)
   const lower = clean.toLowerCase()
 
-  // 1. If already starts with an action gerund
   if (isGerundPhrase(lower)) {
     return clean
   }
 
-  // 2. Specific evaluation events (e.g. "1D Kinematics Test", "Forces Lab")
   if (lower.includes('lab') || lower.includes('inquiry') || lower.includes('investigation')) {
     return lower.startsWith('the ') ? `conducting ${clean}` : `conducting the ${clean}`
   }
@@ -1242,7 +669,6 @@ export function makeGerund(task) {
     return lower.startsWith('the ') ? `completing ${clean}` : `completing the ${clean}`
   }
 
-  // 3. Curriculum concepts & topics (e.g. "projectile motion", "light theory", "kinematics")
   if (lower.includes('theory') || lower.includes('concept') || lower.includes('law') || lower.includes('principle')) {
     return `applying ${clean} concepts`
   }
@@ -1253,67 +679,55 @@ export function makeGerund(task) {
     return `solving ${clean} problems`
   }
 
-  // 4. Default natural phrasing (never "working on the [topic]")
   return `investigating ${clean}`
 }
 
 /**
  * Resolves a non-generic curriculum task name from an assessment object.
- * If the assessment name is generic ("Unit 1 Test", "Lab 2", "Module 1"), resolves from:
- * 1. Tagged curriculum expectations
- * 2. Assessment description
- * 3. Unit name
- * 4. Category name
  */
-export function resolveAssessmentTaskName(ass, courseCode = '') {
+export function resolveAssessmentTaskName(ass, courseCode = '', variantIndex = 0) {
   if (!ass) return ''
 
-  // 1. Try matching course competency from the entire assessment (name, description, unitName, expectations)
   if (courseCode) {
     const allMatches = extractCompetenciesFromAssessment(ass, courseCode)
     if (allMatches.length > 0 && allMatches[0].phrase) {
-      return allMatches[0].phrase
+      return pickCompetencyPhrase(allMatches[0], variantIndex)
     }
   }
 
-  // 2. If assessment has tagged expectations, use the top expectation
   if (Array.isArray(ass.expectations) && ass.expectations.length > 0) {
     const firstExp = ass.expectations[0]
     const condensed = condenseCurriculumExpectation(firstExp)
     if (condensed) {
-      const mapped = courseCode ? mapAssessmentToCompetency(condensed, courseCode) : ''
+      const mapped = courseCode ? mapAssessmentToCompetency(condensed, courseCode, '', variantIndex) : ''
       return mapped || condensed
     }
   }
 
-  // 3. If unit name is available and non-generic, use unit topic
   if (ass.unitName && !isGenericTitle(ass.unitName)) {
     const cleanUnit = sanitizeTaskTitle(ass.unitName)
     if (cleanUnit && cleanUnit.length > 2) {
-      const mapped = courseCode ? mapAssessmentToCompetency(cleanUnit, courseCode) : ''
+      const mapped = courseCode ? mapAssessmentToCompetency(cleanUnit, courseCode, '', variantIndex) : ''
       return mapped || cleanUnit
     }
   }
 
-  // 4. If description is rich and non-generic, use description
   if (ass.description && !isGenericTitle(ass.description)) {
     const cleanDesc = sanitizeTaskTitle(ass.description)
     if (cleanDesc && cleanDesc.length > 3) {
-      const mapped = courseCode ? mapAssessmentToCompetency(cleanDesc, courseCode) : ''
+      const mapped = courseCode ? mapAssessmentToCompetency(cleanDesc, courseCode, '', variantIndex) : ''
       return mapped || cleanDesc
     }
   }
 
-  // 5. If assessment name is non-generic, sanitize and format
   if (ass.name && !isGenericTitle(ass.name)) {
     const cleanName = sanitizeTaskTitle(ass.name)
     if (cleanName && !isGenericTitle(cleanName)) {
-      const mapped = courseCode ? mapAssessmentToCompetency(cleanName, courseCode) : ''
+      const mapped = courseCode ? mapAssessmentToCompetency(cleanName, courseCode, '', variantIndex) : ''
       return mapped || cleanName
     }
   }
 
-  // 6. Fallback to category name if available
   if (ass.categoryName || ass.category) {
     const cat = (ass.categoryName || ass.category).toLowerCase().trim()
     if (CATEGORY_NORMALIZER[cat]) {
@@ -1321,53 +735,141 @@ export function resolveAssessmentTaskName(ass, courseCode = '') {
     }
   }
 
-  // 7. Final fallback to cleaned title if anything remains
   const cleanFallback = sanitizeTaskTitle(ass.name || '')
   return isGenericTitle(cleanFallback) ? '' : cleanFallback
 }
 
+// ─── Attempt / Retest & Teacher Note Extraction Helpers ──────────────────────
+
+function extractAttemptPercent(entry, defaultMaxPoints = 100) {
+  if (typeof entry === 'number' && !isNaN(entry)) return entry
+  if (!entry || typeof entry !== 'object') return null
+  if (typeof entry.scorePercent === 'number' && !isNaN(entry.scorePercent)) return entry.scorePercent
+  if (typeof entry.percentage === 'number' && !isNaN(entry.percentage)) return entry.percentage
+  const max = Number(entry.maxPoints || entry.maxScore || defaultMaxPoints)
+  if (typeof entry.pointsEarned === 'number' && !isNaN(entry.pointsEarned) && max > 0) {
+    return (entry.pointsEarned / max) * 100
+  }
+  if (typeof entry.score === 'number' && !isNaN(entry.score) && max > 0) {
+    return (entry.score / max) * 100
+  }
+  return null
+}
+
 /**
- * Derives a pedagogical profile focus for the student based on actual classroom evidence.
- * Detects:
- *  - 'qualitative_triangulation': Teacher observations / conversations recorded
- *  - 'trajectory_improving': Clear upward trend across recent assessments (+7% or SBAR rising)
- *  - 'modality_practical': Hands-on lab/inquiry performance >= 6% above test performance
- *  - 'modality_analytical': Analytical test/problem performance >= 6% above practical work
- *  - 'category_thinking' / 'category_communication' / 'category_application': Distinct Achievement Chart strengths
- *  - 'consistency_high': Standard deviation <= 5% across assessments with grade >= 70%
- *  - 'work_habits': When explicitly requested or elementary mode
- *  - 'curriculum_general': Standard level-calibrated Ontario Achievement Chart synthesis
+ * Inspects attempt history or retest fields on an assessment to detect mastered retests
+ * (e.g. 49% -> 90% improvement).
  */
+export function getAssessmentAttemptInfo(ass) {
+  const defaultMax = Number(ass?.maxPoints || ass?.maxScore || 100)
+  const rawList = Array.isArray(ass?.attempts)
+    ? ass.attempts
+    : (Array.isArray(ass?.attemptHistory) ? ass.attemptHistory : [])
+
+  const scores = rawList.map(e => extractAttemptPercent(e, defaultMax)).filter(s => s !== null)
+
+  if (scores.length === 0 && typeof ass?.initialScore === 'number' && typeof (ass?.retestScore ?? ass?.scorePercent) === 'number') {
+    scores.push(ass.initialScore, ass.retestScore ?? ass.scorePercent)
+  }
+
+  if (scores.length < 2) {
+    return {
+      hasRetest: false,
+      isMasteredViaRetest: false,
+      firstScore: scores[0] ?? ass?.scorePercent ?? null,
+      latestScore: ass?.scorePercent ?? scores[scores.length - 1] ?? null,
+      improvement: 0
+    }
+  }
+
+  const firstScore = scores[0]
+  const latestAttempt = scores[scores.length - 1]
+  const resolvedScore = typeof ass?.scorePercent === 'number' ? Math.max(ass.scorePercent, latestAttempt) : latestAttempt
+  const improvement = resolvedScore - firstScore
+  const isMasteredViaRetest = resolvedScore >= 75 && improvement >= 15
+
+  return {
+    hasRetest: true,
+    isMasteredViaRetest,
+    firstScore,
+    latestScore: resolvedScore,
+    improvement
+  }
+}
+
+const DISCIPLINARY_NOTE_REGEX = /\b(phone|cellphone|cell\s*phone|late|tardy|absent|attendance|chatting|talking|disruptive|uniform|hall\s*pass|washroom|device|earbuds|headphones|sleeping|detention|misbehav(?:ed|ing|iour|ior))\b/i
+const DIAGNOSTIC_GAP_CUE_REGEX = /\b(need|needs|review|practice|revisit|focus|check|verify|error|errors|mistake|mistakes|missed|gap|gaps|help|support|confused|confusion|incomplete|difficulty|work\s+on|build|consolidate|struggle|weak|incorrect|forgot|forgets|omitted)\b/i
+const PRAISE_ONLY_CUE_REGEX = /\b(strong|excel|excels|mastered|impressive|great|accurate|thorough|exceptional|clear\s+mastery)\b/i
+
+/**
+ * Strips disciplinary/non-academic clauses from teacher observation notes and extracts
+ * curriculum competency matches when present.
+ */
+function extractCompetencyFromTeacherNote(noteText, courseCode, assessment = null) {
+  if (!noteText || typeof noteText !== 'string' || !courseCode) return null
+  const clauses = noteText
+    .split(/[.;\n]+/)
+    .map(c => c.trim())
+    .filter(Boolean)
+
+  const academicClauses = clauses.filter(clause => {
+    if (!DISCIPLINARY_NOTE_REGEX.test(clause)) return true
+    // Only retain a clause mentioning non-academic words if it also explicitly carries diagnostic academic language
+    return DIAGNOSTIC_GAP_CUE_REGEX.test(clause)
+  })
+
+  if (academicClauses.length === 0) return null
+  const cleanedNote = academicClauses.join('. ')
+  const matches = extractCompetenciesFromAssessment({ name: cleanedNote, description: cleanedNote }, courseCode)
+  if (matches.length === 0) return null
+
+  // If the note is purely praising and on a high-scoring task (>= 82%), don't treat it as a growth gap
+  const score = assessment?.scorePercent
+  const hasGapCue = DIAGNOSTIC_GAP_CUE_REGEX.test(cleanedNote)
+  const hasPraiseOnly = PRAISE_ONLY_CUE_REGEX.test(cleanedNote) && !hasGapCue
+  if (hasPraiseOnly && (score == null || score >= 82)) {
+    return null
+  }
+
+  return {
+    competency: resolveCompetencyObject(matches[0].phrase, courseCode) || matches[0],
+    cleanedNote,
+    hasGapCue,
+    score: typeof score === 'number' ? score : null
+  }
+}
+
+// ─── Pedagogical Student Profile Focus ────────────────────────────────────────
+
 export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, options = {}) {
-  // If user explicitly specified a profile focus (other than 'auto'), honor it
   if (options?.profileFocus && options.profileFocus !== 'auto') {
     const manualMap = {
-      inquiry_practical: { key: 'modality_practical', label: 'Hands-on Labs & Inquiry', badge: '🔬 Practical Inquiry' },
-      modality_practical: { key: 'modality_practical', label: 'Hands-on Labs & Inquiry', badge: '🔬 Practical Inquiry' },
-      analytical_theory: { key: 'modality_analytical', label: 'Analytical Problem Solving', badge: '📐 Analytical Focus' },
-      modality_analytical: { key: 'modality_analytical', label: 'Analytical Problem Solving', badge: '📐 Analytical Focus' },
-      growth_trajectory: { key: 'trajectory_improving', label: 'Rising Momentum', badge: '📈 Improving Trend' },
-      trajectory_improving: { key: 'trajectory_improving', label: 'Rising Momentum', badge: '📈 Improving Trend' },
-      consistent_rigor: { key: 'consistency_high', label: 'Consistent Performance', badge: '🎯 High Consistency' },
-      consistency_high: { key: 'consistency_high', label: 'Consistent Performance', badge: '🎯 High Consistency' },
-      category_thinking: { key: 'category_thinking', label: 'Critical Thinking', badge: '💡 Critical Thinking' },
-      category_communication: { key: 'category_communication', label: 'Technical Communication', badge: '💬 Communication' },
-      category_application: { key: 'category_application', label: 'Real-World Application', badge: '🌍 Application' },
-      qualitative_evidence: { key: 'qualitative_triangulation', label: 'Triangulation (Observations/Conversations)', badge: '🗣️ Observations' },
-      qualitative_triangulation: { key: 'qualitative_triangulation', label: 'Triangulation (Observations/Conversations)', badge: '🗣️ Observations' },
-      learning_skills: { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: '📋 Work Habits' },
-      work_habits: { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: '📋 Work Habits' },
-      curriculum_general: { key: 'curriculum_general', label: 'Curriculum Application', badge: '📚 Curriculum Focus' }
+      inquiry_practical: { key: 'modality_practical', label: 'Hands-on Labs & Inquiry', badge: 'Practical Inquiry' },
+      modality_practical: { key: 'modality_practical', label: 'Hands-on Labs & Inquiry', badge: 'Practical Inquiry' },
+      analytical_theory: { key: 'modality_analytical', label: 'Analytical Problem Solving', badge: 'Analytical Focus' },
+      modality_analytical: { key: 'modality_analytical', label: 'Analytical Problem Solving', badge: 'Analytical Focus' },
+      growth_trajectory: { key: 'trajectory_improving', label: 'Rising Momentum', badge: 'Improving Trend' },
+      trajectory_improving: { key: 'trajectory_improving', label: 'Rising Momentum', badge: 'Improving Trend' },
+      consistent_rigor: { key: 'consistency_high', label: 'Consistent Performance', badge: 'High Consistency' },
+      consistency_high: { key: 'consistency_high', label: 'Consistent Performance', badge: 'High Consistency' },
+      category_thinking: { key: 'category_thinking', label: 'Critical Thinking', badge: 'Critical Thinking' },
+      category_communication: { key: 'category_communication', label: 'Technical Communication', badge: 'Communication' },
+      category_application: { key: 'category_application', label: 'Real-World Application', badge: 'Application' },
+      qualitative_evidence: { key: 'qualitative_triangulation', label: 'Triangulation (Observations/Conversations)', badge: 'Observations' },
+      qualitative_triangulation: { key: 'qualitative_triangulation', label: 'Triangulation (Observations/Conversations)', badge: 'Observations' },
+      learning_skills: { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: 'Work Habits' },
+      work_habits: { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: 'Work Habits' },
+      curriculum_general: { key: 'curriculum_general', label: 'Curriculum Application', badge: 'Curriculum Focus' }
     }
-    const found = manualMap[options.profileFocus] || { key: options.profileFocus, label: options.profileFocus, badge: '📌 Selected Focus' }
+    const found = manualMap[options.profileFocus] || { key: options.profileFocus, label: options.profileFocus, badge: 'Selected Focus' }
     if (options?.mode === 'secondary' && (found.key === 'work_habits' || found.key === 'learning_skills')) {
-      return { key: 'curriculum_general', label: 'Curriculum Application', badge: '📚 Curriculum Focus', metric: '' }
+      return { key: 'curriculum_general', label: 'Curriculum Application', badge: 'Curriculum Focus', metric: '' }
     }
     return { ...found, metric: '' }
   }
 
   if (options?.includeWorkHabits && options?.mode !== 'secondary') {
-    return { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: '📋 Work Habits', metric: '' }
+    return { key: 'work_habits', label: 'Learning Skills & Work Habits', badge: 'Work Habits', metric: '' }
   }
 
   const assessments = Array.isArray(gradeData?.assessments)
@@ -1375,19 +877,17 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
     : []
 
   // 1. Trajectory / Rising Momentum
-  // A. Check SBAR trends
   const sbar = Array.isArray(gradeData?.sbarExpectations) ? gradeData.sbarExpectations : []
   const improvingExpectations = sbar.filter(e => e.trend === 'improving' || e.trend === '+')
   if (improvingExpectations.length >= 2 || (improvingExpectations.length >= 1 && sbar.length <= 3)) {
     return {
       key: 'trajectory_improving',
       label: 'Rising Momentum',
-      badge: '📈 Improving Trend',
+      badge: 'Improving Trend',
       metric: `${improvingExpectations.length} expectations rising`
     }
   }
 
-  // B. Check chronological assessment trajectory (if 3+ assessments)
   if (assessments.length >= 3) {
     const sortedByDate = [...assessments].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
     const mid = Math.floor(sortedByDate.length / 2)
@@ -1401,9 +901,19 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
       return {
         key: 'trajectory_improving',
         label: `Rising Momentum (+${diff}%)`,
-        badge: '📈 Improving Trend',
+        badge: 'Improving Trend',
         metric: `+${diff}% recently`
       }
+    }
+  }
+
+  if (assessments.some(a => getAssessmentAttemptInfo(a).isMasteredViaRetest)) {
+    const bestGain = Math.max(...assessments.map(a => Math.round(getAssessmentAttemptInfo(a).improvement || 0)))
+    return {
+      key: 'trajectory_improving',
+      label: `Rising Momentum (+${bestGain}% retest)`,
+      badge: 'Improving Trend',
+      metric: `+${bestGain}% via reassessment`
     }
   }
 
@@ -1429,7 +939,7 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
         return {
           key: 'modality_practical',
           label: `Stronger in Practical/Labs (+${labAdvantage}%)`,
-          badge: '🔬 Practical Inquiry',
+          badge: 'Practical Inquiry',
           metric: `${Math.round(avgLab)}% labs vs ${Math.round(avgTest)}% tests`
         }
       }
@@ -1438,14 +948,14 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
         return {
           key: 'modality_analytical',
           label: `Stronger in Analytical/Tests (+${testAdvantage}%)`,
-          badge: '📐 Analytical Focus',
+          badge: 'Analytical Focus',
           metric: `${Math.round(avgTest)}% tests vs ${Math.round(avgLab)}% labs`
         }
       }
     }
   }
 
-  // 3. Achievement Chart Categories (Knowledge, Thinking, Communication, Application)
+  // 3. Achievement Chart Categories
   const catSource = (Array.isArray(gradeData.categories) && gradeData.categories.length > 0)
     ? gradeData.categories
     : (gradeData.categoryResults ? Object.values(gradeData.categoryResults).filter(Boolean).map(c => ({
@@ -1467,7 +977,7 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
         return {
           key: 'category_thinking',
           label: `Thinking & Inquiry Strength (${Math.round(topCat.average)}%)`,
-          badge: '💡 Critical Thinking',
+          badge: 'Critical Thinking',
           metric: `${Math.round(topCat.average)}% in Thinking`
         }
       }
@@ -1475,7 +985,7 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
         return {
           key: 'category_communication',
           label: `Communication Strength (${Math.round(topCat.average)}%)`,
-          badge: '💬 Communication',
+          badge: 'Communication',
           metric: `${Math.round(topCat.average)}% in Communication`
         }
       }
@@ -1483,7 +993,7 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
         return {
           key: 'category_application',
           label: `Application Strength (${Math.round(topCat.average)}%)`,
-          badge: '🌍 Application',
+          badge: 'Application',
           metric: `${Math.round(topCat.average)}% in Application`
         }
       }
@@ -1501,13 +1011,13 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
       return {
         key: 'consistency_high',
         label: `High Consistency (±${Math.round(stdDev)}%)`,
-        badge: '🎯 High Consistency',
+        badge: 'High Consistency',
         metric: `Consistent ${Math.round(mean)}%`
       }
     }
   }
 
-  // 5. Qualitative Triangulation (Student-specific Observations / Conversations)
+  // 5. Qualitative Triangulation
   const hasObservations = (gradeData?.observations && gradeData.observations.length > 0) ||
     assessments.some(a => (a.assessmentType === 'observation' || a.modality === 'observation') && a.scorePercent >= 75) ||
     (gradeData?.events && gradeData.events.some(e => e.type === 'observation' || e.eventType === 'observation'))
@@ -1519,35 +1029,52 @@ export function deriveStudentProfileFocus(gradeData = {}, learningSkills = {}, o
     return {
       key: 'qualitative_triangulation',
       label: 'Triangulation of Evidence',
-      badge: '🗣️ Triangulated Evidence',
+      badge: 'Triangulated Evidence',
       metric: (hasObservations && hasConversations) ? 'Conversations + Observations' : (hasConversations ? 'Classroom Conversations' : 'Teacher Observations')
     }
   }
 
-  // 6. Default fallback: Level-calibrated Ontario Achievement Chart synthesis
   return {
     key: 'curriculum_general',
     label: 'Curriculum Application',
-    badge: '📚 Curriculum Focus',
+    badge: 'Curriculum Focus',
     metric: ''
   }
 }
 
+// ─── Evidence Extraction Engine ──────────────────────────────────────────────
+
 /**
- * Extracts best strength and growth evidence from available gradebook data.
+ * Extracts best strength, growth, shortTopics, and concept-matched tool evidence
+ * from available gradebook data (SBAR expectations, assessments with retest & cutoff
+ * awareness, inline teacher notes, and category averages).
  */
-export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
+export function extractEvidenceFromGrades(gradeData = {}, courseCode = '', options = {}) {
   const { sbarExpectations = [], assessments = [], categories = [] } = gradeData
   const resolvedCourseCode = courseCode || gradeData.courseCode || ''
+  const variantSeed = Math.abs(Math.floor(Number(options?.variantSeed) || 0))
+  const isFinalPeriod = Boolean(
+    options?.isFinal ||
+    options?.reportingPeriod === 'Final' ||
+    gradeData?.isFinal ||
+    gradeData?.reportingPeriod === 'Final'
+  )
 
   let strengthTask = null
+  let strengthShortTopic = null
+  let strengthComp = null
   let strengthSource = 'holistic'
   let strengthScore = null
   let strengthModality = 'general'
+
   let growthTask = null
+  let growthShortTopic = null
+  let growthComp = null
   let growthSource = 'holistic'
   let growthScore = null
   let growthModality = 'general'
+
+  const retestMasteredTasks = []
 
   // 1. Try SBAR Expectations first
   if (Array.isArray(sbarExpectations) && sbarExpectations.length > 0) {
@@ -1558,8 +1085,10 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
       const top = sorted[0]
       const condensedTop = condenseCurriculumExpectation(top)
       const rawTop = condensedTop || top.title || top.description || (top.code ? `Expectation ${top.code}` : null)
-      const mappedTop = resolvedCourseCode ? mapAssessmentToCompetency(rawTop, resolvedCourseCode) : ''
+      strengthComp = resolvedCourseCode ? resolveCompetencyObject(rawTop, resolvedCourseCode) : null
+      const mappedTop = strengthComp ? pickCompetencyPhrase(strengthComp, variantSeed) : ''
       strengthTask = mappedTop || sanitizeTaskTitle(rawTop)
+      strengthShortTopic = strengthComp ? pickCompetencyShortTopic(strengthComp, variantSeed) : strengthTask
       strengthSource = 'sbar'
       strengthScore = top.average ?? (top.masteryLevel ? Number(top.masteryLevel) * 25 : null)
       strengthModality = 'expectation'
@@ -1569,10 +1098,14 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
         const low = sorted[i]
         const condensedLow = condenseCurriculumExpectation(low)
         const rawLow = condensedLow || low.title || low.description || (low.code ? `Expectation ${low.code}` : null)
-        const mappedLow = resolvedCourseCode ? mapAssessmentToCompetency(rawLow, resolvedCourseCode) : ''
+        const candComp = resolvedCourseCode ? resolveCompetencyObject(rawLow, resolvedCourseCode) : null
+        const mappedLow = candComp ? pickCompetencyPhrase(candComp, variantSeed === 0 ? 0 : variantSeed + 1) : ''
         const candidateGrowth = mappedLow || sanitizeTaskTitle(rawLow)
-        if (candidateGrowth && candidateGrowth.trim().toLowerCase() !== strengthLower) {
+        const sameComp = strengthComp && candComp && strengthComp.label === candComp.label
+        if (candidateGrowth && !sameComp && candidateGrowth.trim().toLowerCase() !== strengthLower) {
+          growthComp = candComp
           growthTask = candidateGrowth
+          growthShortTopic = candComp ? pickCompetencyShortTopic(candComp, variantSeed === 0 ? 0 : variantSeed + 1) : candidateGrowth
           growthSource = 'sbar'
           growthScore = low.average ?? (low.masteryLevel ? Number(low.masteryLevel) * 25 : null)
           growthModality = 'expectation'
@@ -1584,16 +1117,48 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
 
   // 2. Fall back to Individual Assessments if SBAR not present
   if (!strengthTask && Array.isArray(assessments) && assessments.length > 0) {
-    const valid = assessments.filter(a => {
-      if (typeof a.scorePercent !== 'number') return false
-      if (isCommentExcludedAssessment(a, gradeData)) return false
-      return true
-    }).sort((a, b) => b.scorePercent - a.scorePercent)
+    const validRaw = assessments
+      .map((a, idx) => ({ ...a, _origIndex: idx, _attemptInfo: getAssessmentAttemptInfo(a) }))
+      .filter(a => typeof a.scorePercent === 'number' && !isCommentExcludedAssessment(a, gradeData))
+
+    validRaw.forEach(a => {
+      if (a._attemptInfo.isMasteredViaRetest && a.name) {
+        retestMasteredTasks.push(a.name)
+      }
+    })
+
+    // Tag post-midterm / second-half assessments when Final period and >= 4 assessments
+    if (isFinalPeriod && validRaw.length >= 4) {
+      const hasExplicitTermTag = validRaw.some(a =>
+        a.isPostMidterm !== undefined ||
+        /final|term\s*2|post-midterm/i.test(String(a.term || a.reportingPeriod || ''))
+      )
+      if (hasExplicitTermTag) {
+        validRaw.forEach(a => {
+          a._isPostMidterm = Boolean(
+            a.isPostMidterm ||
+            /final|term\s*2|post-midterm/i.test(String(a.term || a.reportingPeriod || ''))
+          )
+        })
+      } else {
+        const chrono = [...validRaw].sort((a, b) => {
+          if (a.date && b.date) {
+            const diff = new Date(a.date) - new Date(b.date)
+            if (diff !== 0) return diff
+          }
+          return a._origIndex - b._origIndex
+        })
+        const cutoffIdx = Math.floor(chrono.length / 2)
+        const postSet = new Set(chrono.slice(cutoffIdx))
+        validRaw.forEach(a => {
+          a._isPostMidterm = postSet.has(a)
+        })
+      }
+    }
+
+    const valid = [...validRaw].sort((a, b) => b.scorePercent - a.scorePercent)
 
     if (valid.length > 0) {
-      // Rank assessments for featured strength using class-relative performance and weight
-      // so class-wide high-scoring activities (e.g. hands-on labs where everyone got 95%)
-      // do not automatically outrank genuine individual strengths on weighted evaluations.
       const strengthRankScore = (a) => {
         let score = a.scorePercent
         if (typeof a.classMedian === 'number' && !isNaN(a.classMedian)) {
@@ -1602,43 +1167,148 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
         if (typeof a.weight === 'number' && a.weight > 0) {
           score += Math.min(8, Math.log1p(a.weight) * 2)
         }
+        if (isFinalPeriod && a._isPostMidterm) {
+          score += 12
+        }
         return score
       }
+
       const rankedForStrength = [...valid].sort((a, b) => strengthRankScore(b) - strengthRankScore(a))
       const topAss = rankedForStrength[0]
-      strengthTask = resolveAssessmentTaskName(topAss, resolvedCourseCode)
+      const topMatches = resolvedCourseCode ? extractCompetenciesFromAssessment(topAss, resolvedCourseCode) : []
+      strengthComp = topMatches.length > 0
+        ? (resolveCompetencyObject(topMatches[0].phrase, resolvedCourseCode) || topMatches[0])
+        : null
+      strengthTask = strengthComp
+        ? pickCompetencyPhrase(strengthComp, variantSeed)
+        : resolveAssessmentTaskName(topAss, resolvedCourseCode, variantSeed)
+      strengthShortTopic = strengthComp
+        ? pickCompetencyShortTopic(strengthComp, variantSeed)
+        : formatCurriculumTopic(strengthTask)
       strengthSource = 'assessment'
       strengthScore = topAss.scorePercent
       strengthModality = topAss.assessmentType || (topAss.name?.toLowerCase().includes('lab') ? 'practical' : 'analytical')
 
       const strengthLower = (strengthTask || '').trim().toLowerCase()
-      for (let i = valid.length - 1; i >= 0; i--) {
-        const lowAss = valid[i]
-        if (!lowAss || lowAss === topAss || lowAss.name === topAss.name) continue
-        const candidateGrowth = resolveAssessmentTaskName(lowAss, resolvedCourseCode)
-        if (candidateGrowth && candidateGrowth.trim().toLowerCase() !== strengthLower) {
-          growthTask = candidateGrowth
-          growthSource = 'assessment'
-          growthScore = lowAss.scorePercent
-          growthModality = lowAss.assessmentType || (lowAss.name?.toLowerCase().includes('lab') ? 'practical' : 'analytical')
-          break
+      const growthVariant = variantSeed === 0 ? 0 : variantSeed + 1
+
+      // 2a. Check Inline Teacher Notes / Observations first for diagnostic curriculum gaps
+      const noteCandidates = []
+      if (resolvedCourseCode) {
+        const globalNotes = [
+          gradeData.teacherNote,
+          gradeData.note,
+          ...(Array.isArray(gradeData.observations) ? gradeData.observations.map(o => (typeof o === 'string' ? o : o?.note || o?.comment || o?.text || '')) : []),
+          ...(Array.isArray(gradeData.events) ? gradeData.events.filter(e => e.type === 'observation' || e.eventType === 'observation' || e.type === 'note').map(e => e.note || e.comment || e.description || '') : [])
+        ].filter(Boolean)
+
+        for (const gn of globalNotes) {
+          const hit = extractCompetencyFromTeacherNote(gn, resolvedCourseCode, null)
+          if (hit) noteCandidates.push({ ...hit, priority: hit.hasGapCue ? 2 : 1, isPostMidterm: true })
+        }
+
+        for (const ass of valid) {
+          const attemptNotes = Array.isArray(ass.attempts)
+            ? ass.attempts.map(at => at?.comment || at?.note || '').filter(Boolean)
+            : []
+          const rawNotes = [ass.note, ass.comment, ass.teacherNote, ...attemptNotes].filter(Boolean)
+          for (const rn of rawNotes) {
+            const hit = extractCompetencyFromTeacherNote(rn, resolvedCourseCode, ass)
+            if (hit && (hit.hasGapCue || ass.scorePercent < 82)) {
+              noteCandidates.push({
+                ...hit,
+                priority: (hit.hasGapCue ? 3 : 1) + (ass._isPostMidterm ? 1 : 0),
+                isPostMidterm: Boolean(ass._isPostMidterm)
+              })
+            }
+          }
         }
       }
 
-      if (!growthTask && valid.length === 1 && topAss.description && resolvedCourseCode) {
-        // When there is only 1 comprehensive assessment with a rich description,
-        // extract the second-highest scoring competency from that assessment for growth!
+      if (noteCandidates.length > 0) {
+        noteCandidates.sort((a, b) => b.priority - a.priority || (a.score ?? 100) - (b.score ?? 100))
+        for (const cand of noteCandidates) {
+          const sameComp = strengthComp && cand.competency?.label === strengthComp.label
+          const candPhrase = pickCompetencyPhrase(cand.competency, growthVariant)
+          if (!sameComp && candPhrase.trim().toLowerCase() !== strengthLower) {
+            growthComp = cand.competency
+            growthTask = candPhrase
+            growthShortTopic = pickCompetencyShortTopic(cand.competency, growthVariant)
+            growthSource = 'teacher_note'
+            growthScore = cand.score
+            growthModality = 'observation'
+            break
+          }
+        }
+      }
+
+      // 2b. Select lowest non-retest-mastered assessment (prioritizing post-midterm on Final >= 4 assessments)
+      if (!growthTask) {
+        const growthCandidates = valid
+          .filter(a => a !== topAss && a.name !== topAss.name)
+          .sort((a, b) => {
+            // Avoid selecting retest-mastered assessments when other non-retest tasks exist
+            if (a._attemptInfo.isMasteredViaRetest !== b._attemptInfo.isMasteredViaRetest) {
+              return a._attemptInfo.isMasteredViaRetest ? 1 : -1
+            }
+            // On Final with >= 4 assessments, prioritize second-half / post-midterm assessments
+            const aEff = a.scorePercent - (isFinalPeriod && a._isPostMidterm ? 12 : 0)
+            const bEff = b.scorePercent - (isFinalPeriod && b._isPostMidterm ? 12 : 0)
+            return aEff - bEff
+          })
+
+        for (const lowAss of growthCandidates) {
+          const allMatches = resolvedCourseCode ? extractCompetenciesFromAssessment(lowAss, resolvedCourseCode) : []
+          let matchedComp = allMatches.length > 0
+            ? (resolveCompetencyObject(allMatches[0].phrase, resolvedCourseCode) || allMatches[0])
+            : null
+
+          // If top match collides with strengthComp, try secondary competency match on the same assessment
+          if (matchedComp && strengthComp && matchedComp.label === strengthComp.label && allMatches.length > 1) {
+            matchedComp = resolveCompetencyObject(allMatches[1].phrase, resolvedCourseCode) || allMatches[1]
+          }
+
+          if (matchedComp && strengthComp && matchedComp.label === strengthComp.label) {
+            continue
+          }
+
+          const candidateGrowth = matchedComp
+            ? pickCompetencyPhrase(matchedComp, growthVariant)
+            : resolveAssessmentTaskName(lowAss, resolvedCourseCode, growthVariant)
+
+          if (candidateGrowth && candidateGrowth.trim().toLowerCase() !== strengthLower) {
+            growthComp = matchedComp
+            growthTask = candidateGrowth
+            growthShortTopic = matchedComp
+              ? pickCompetencyShortTopic(matchedComp, growthVariant)
+              : formatCurriculumTopic(candidateGrowth)
+            growthSource = 'assessment'
+            growthScore = lowAss.scorePercent
+            growthModality = lowAss.assessmentType || (lowAss.name?.toLowerCase().includes('lab') ? 'practical' : 'analytical')
+            break
+          }
+        }
+      }
+
+      // 2c. Single comprehensive assessment fallback: pick second-best competency on that assessment
+      if (!growthTask && valid.length === 1 && resolvedCourseCode) {
         const allMatches = extractCompetenciesFromAssessment(topAss, resolvedCourseCode)
-        if (allMatches.length > 1 && allMatches[1].phrase !== strengthTask) {
-          growthTask = allMatches[1].phrase
-          growthSource = 'assessment'
-          growthScore = topAss.scorePercent
+        if (allMatches.length > 1) {
+          const secondComp = resolveCompetencyObject(allMatches[1].phrase, resolvedCourseCode) || allMatches[1]
+          const secondPhrase = pickCompetencyPhrase(secondComp, growthVariant)
+          if (secondPhrase.trim().toLowerCase() !== strengthLower) {
+            growthComp = secondComp
+            growthTask = secondPhrase
+            growthShortTopic = pickCompetencyShortTopic(secondComp, growthVariant)
+            growthSource = 'assessment'
+            growthScore = topAss.scorePercent
+          }
         }
       }
     }
   }
 
-  // 3. Fall back to Categories (filtering non-academic & formative/0% ones & normalizing)
+  // 3. Fall back to Categories
   const catSource = (Array.isArray(categories) && categories.length > 0)
     ? categories
     : (gradeData.categoryResults ? Object.values(gradeData.categoryResults).filter(Boolean).map(c => ({
@@ -1661,6 +1331,7 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
       const topCat = validCats[0]
       const catLower = (topCat.name || '').trim().toLowerCase()
       strengthTask = CATEGORY_NORMALIZER[catLower] || topCat.name
+      strengthShortTopic = strengthTask
       strengthSource = 'category'
       strengthScore = topCat.average
 
@@ -1668,30 +1339,42 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
       if (validCats.length > 1 && lowCat) {
         const lowCatLower = (lowCat.name || '').trim().toLowerCase()
         growthTask = CATEGORY_NORMALIZER[lowCatLower] || lowCat.name
+        growthShortTopic = growthTask
         growthSource = 'category'
         growthScore = lowCat.average
       }
     }
   }
 
-  const profile = deriveStudentProfileFocus(gradeData)
+  const recommendedTool = growthComp
+    ? pickCompetencyTool(growthComp, variantSeed)
+    : mapAssessmentToTool(growthTask || '', resolvedCourseCode, '', variantSeed)
+
+  const profile = deriveStudentProfileFocus(gradeData, {}, options)
 
   return {
     strengthTask,
+    strengthShortTopic,
+    strengthLabel: strengthComp?.label || null,
     strengthSource,
     strengthScore,
     strengthModality,
     growthTask,
+    growthShortTopic,
+    growthLabel: growthComp?.label || null,
     growthSource,
     growthScore,
     growthModality,
+    recommendedTool,
+    retestMasteredTasks,
     profileFocus: profile.key
   }
 }
 
+// ─── Anti-Repetition & Seeding Utilities ─────────────────────────────────────
+
 /**
- * Detects if Sentence 1 and Sentence 2 share the same evaluative main verb
- * (e.g. "demonstrates" in S1 and "demonstrates" in S2), preventing repetitive phrasing.
+ * Detects if Sentence 1 and Sentence 2 share the same evaluative main verb.
  */
 export function hasVerbClash(s1, s2) {
   if (!s1 || !s2) return false
@@ -1700,24 +1383,16 @@ export function hasVerbClash(s1, s2) {
     'shows?',
     'applies?',
     'exhibits?',
-    'excels?'
+    'excels?',
+    'continues?'
   ]
-  for (const v of verbs) {
-    const re = new RegExp(`\\b${v}\\b`, 'i')
+  for (const verb of verbs) {
+    const re = new RegExp(`\\b${verb}\\b`, 'i')
     if (re.test(s1) && re.test(s2)) return true
   }
   return false
 }
 
-/**
- * Computes a deterministic, well-dispersed variant seed (0..511) for a student so that
- * multiple students in the same class with similar grades do not receive identical phrasing.
- *
- * @param {Object} [student={}]
- * @param {string} [contextKey='']   Reporting period and/or subject key (e.g. 'Midterm', 'Term 1__subj_math')
- * @param {number} [rosterIndex=-1]  Optional 0-based index of student in class roster
- * @returns {number}
- */
 export function computeStudentVariantSeed(student = {}, contextKey = '', rosterIndex = -1) {
   let contextOffset = 0
   const cleanCtx = String(contextKey || '').trim()
@@ -1734,8 +1409,6 @@ export function computeStudentVariantSeed(student = {}, contextKey = '', rosterI
     contextOffset = h % 512
   }
 
-  // If roster index is known, step by coprime stride (5 is coprime to 512) so adjacent
-  // students in the class list always vary across all 3 sentence positions without colliding
   if (typeof rosterIndex === 'number' && rosterIndex >= 0) {
     return (rosterIndex * 5 + contextOffset) % 512
   }
@@ -1759,14 +1432,6 @@ export function computeStudentVariantSeed(student = {}, contextKey = '', rosterI
   return (hash + contextOffset) % 512
 }
 
-/**
- * Normalizes a generated comment by replacing the student's name and pronouns with
- * canonical placeholders so two students' comments can be compared for identical phrasing.
- *
- * @param {string} commentText
- * @param {Object} [student={}]
- * @returns {string}
- */
 export function normalizeCommentTemplate(commentText = '', student = {}) {
   if (!commentText) return ''
   const tokens = getPronounTokens(student, 'preferred')
@@ -1787,48 +1452,513 @@ export function normalizeCommentTemplate(commentText = '', student = {}) {
   return norm.toLowerCase()
 }
 
+// ─── ORCCG Core Triad & 6 Syntactic Blueprints (Secondary) ──────────────────
+
+function getProfileBlueprintContext(profileKey, dept, isBelowStandard, variant = 0) {
+  const isSci = dept === 'science'
+  const isMath = dept === 'math'
+  const idx = Math.abs(variant)
+
+  const pick = (arr) => arr[idx % arr.length]
+
+  if (isBelowStandard) {
+    if (profileKey === 'modality_practical') {
+      return {
+        opener: pick(['During hands-on activities,', 'In guided practical tasks,']),
+        tail: 'engaging steadily during practical inquiries',
+        shortTail: ''
+      }
+    }
+    return {
+      opener: pick(['With structured guidance,', 'During guided classroom tasks,']),
+      tail: 'engaging with foundational concepts through step-by-step support',
+      shortTail: ''
+    }
+  }
+
+  switch (profileKey) {
+    case 'modality_practical':
+      return {
+        opener: isSci
+          ? pick(['During hands-on lab inquiries,', 'In practical investigations,'])
+          : (isMath ? pick(['During hands-on modelling tasks,', 'In exploratory class tasks,']) : pick(['During interactive workshops,', 'In collaborative inquiries,'])),
+        tail: isSci
+          ? 'connecting experimental observations to core principles'
+          : (isMath ? 'connecting concrete models to algebraic concepts' : 'connecting class inquiries to core course themes'),
+        shortTail: isSci ? ' during lab inquiries' : ''
+      }
+    case 'modality_analytical':
+      return {
+        opener: isSci || isMath
+          ? pick(['Across quantitative problem solving,', 'During analytical evaluations,'])
+          : pick(['During close textual analysis,', 'In analytical writing tasks,']),
+        tail: isSci || isMath
+          ? 'organizing multi-step reasoning with clear precision'
+          : 'structuring textual analysis with clear reasoning',
+        shortTail: ' in analytical tasks'
+      }
+    case 'trajectory_improving':
+      return {
+        opener: pick(['Across recent units,', 'Building momentum across recent tasks,']),
+        tail: 'showing clear upward growth across recent evaluations',
+        shortTail: ' with steady recent growth'
+      }
+    case 'consistency_high':
+      return {
+        opener: pick(['Across unit evaluations,', 'Maintaining steady precision,']),
+        tail: isSci || isMath
+          ? 'producing accurate, well-organized solutions across units'
+          : 'producing thoughtful, well-organized work across units',
+        shortTail: ' consistently across units'
+      }
+    case 'category_thinking':
+      return {
+        opener: pick(['During critical-thinking inquiries,', 'When analyzing unfamiliar problems,']),
+        tail: 'evaluating evidence with thoughtful critical reasoning',
+        shortTail: ' through critical inquiry'
+      }
+    case 'category_communication':
+      return {
+        opener: isSci || isMath
+          ? pick(['Using clear technical terminology,', 'Communicating reasoning clearly,'])
+          : pick(['Communicating ideas clearly,', 'In written and seminar responses,']),
+        tail: isSci || isMath
+          ? 'communicating intermediate steps and terminology clearly'
+          : 'articulating arguments with clarity and precision',
+        shortTail: ' with clear communication'
+      }
+    case 'category_application':
+      return {
+        opener: pick(['Connecting concepts to real contexts,', 'When tackling applied scenarios,']),
+        tail: 'transferring learned principles to practical applications',
+        shortTail: ' across applied contexts'
+      }
+    case 'qualitative_triangulation':
+      return {
+        opener: pick(['Through classroom discussions,', 'During class observations and dialogue,']),
+        tail: 'articulating conceptual understanding clearly in dialogue',
+        shortTail: ' in classroom discussions'
+      }
+    default:
+      return {
+        opener: isSci
+          ? pick(['During unit labs and evaluations,', 'Across scientific inquiries,'])
+          : (isMath ? pick(['During unit assessments,', 'Across problem-solving tasks,']) : pick(['Across written tasks and seminars,', 'During course inquiries,'])),
+        tail: isSci || isMath
+          ? 'organizing multi-step reasoning logically'
+          : 'supporting written ideas with clear evidence',
+        shortTail: ''
+      }
+  }
+}
+
+function getStrengthQualifierPhrase(level, isBelowStandard, variant = 0) {
+  const idx = Math.abs(variant)
+  if (isBelowStandard) {
+    const rel = [
+      'relative strength and clearer focus',
+      'greater confidence on structured tasks',
+      'their clearest grasp of concepts this term'
+    ]
+    return rel[idx % rel.length]
+  }
+  const map = {
+    '4+': ['exceptional analytical depth', 'thorough conceptual mastery', 'consistent insight and clarity'],
+    '4': ['thorough conceptual understanding', 'strong analytical skill and clarity', 'commendable accuracy and skill'],
+    '3': ['considerable competence and clarity', 'solid conceptual understanding', 'reliable skill and organization'],
+    '2': ['developing consistency', 'emerging understanding with guidance', 'growing familiarity with core ideas'],
+    '1': ['emerging capability with support', 'developing familiarity through scaffolding'],
+    'R': ['initial engagement with direct guidance', 'foundational familiarity with structured support']
+  }
+  const list = map[level.key] || map['3']
+  return list[idx % list.length]
+}
+
+function getGrowthGapPhrasing(tokens, growthLevel, overallLevel, gGerund, gShort, isCompact, variant = 0) {
+  const idx = Math.abs(variant)
+  const gIsGerund = isGerundPhrase(gGerund)
+  const shortIsGerund = isGerundPhrase(gShort)
+  const prepWithShort = shortIsGerund ? `when ${gShort}` : `with ${gShort}`
+  const prepInShort = shortIsGerund ? `when ${gShort}` : `in ${gShort}`
+  const nounForConsolidate = shortIsGerund ? `skills when ${gShort}` : gShort
+
+  if (overallLevel.key === 'R' || overallLevel.key === '1') {
+    const belowBridge = idx % 2 === 0
+      ? 'while overall achievement remains below the provincial standard'
+      : 'although foundational gaps remain'
+
+    return {
+      diagnosticSentence: isCompact
+        ? `Building consistency ${prepWithShort} is a priority, ${belowBridge}.`
+        : `Building foundational skills ${prepWithShort} remains an essential focus, ${belowBridge}.`,
+      pivotClause: `overall achievement remains below the provincial standard and ${prepInShort.startsWith('when ') ? `fluency ${prepInShort}` : gShort} requires guided reinforcement`,
+      consolidationSentence: `Developing core familiarity ${prepWithShort} is key, ${belowBridge}.`,
+      whileClause: `overall achievement remains below the provincial standard as ${tokens.subjectLower} ${v(tokens, 'builds', 'build')} skills ${prepWithShort}`,
+      prepWithShort,
+      prepInShort
+    }
+  }
+
+  switch (growthLevel.key) {
+    case '4+':
+      return {
+        diagnosticSentence: isCompact
+          ? `Extending reasoning ${prepInShort} will deepen mastery.`
+          : `Extending critical reasoning to unfamiliar scenarios ${prepInShort} will deepen mastery.`,
+        pivotClause: `tackling open-ended extensions ${prepInShort} offers room to stretch mastery`,
+        consolidationSentence: `Exploring advanced extensions ${prepInShort} is a great next focus.`,
+        whileClause: `${tokens.subjectLower} ${v(tokens, 'continues', 'continue')} extending conceptual depth ${prepInShort}`,
+        prepWithShort,
+        prepInShort
+      }
+    case '4':
+      return {
+        diagnosticSentence: isCompact
+          ? `${tokens.possessiveCapital} next focus is refining precision ${prepInShort}.`
+          : `${tokens.possessiveCapital} next milestone is refining written justifications ${prepInShort}.`,
+        pivotClause: `refining full justifications ${prepInShort} will elevate work toward Level 4+`,
+        consolidationSentence: `Sharpening full justifications ${prepInShort} is a valuable focus for growth.`,
+        whileClause: `${tokens.subjectLower} ${v(tokens, 'refines', 'refine')} multi-step justifications ${prepInShort}`,
+        prepWithShort,
+        prepInShort
+      }
+    case '3':
+      return {
+        diagnosticSentence: idx % 2 === 0
+          ? `${tokens.possessiveCapital} next focus is ${gIsGerund && isCompact === false ? gGerund : `building consistency ${prepWithShort}`}.`
+          : `Further practice is helpful when ${gGerund} to build greater precision.`,
+        pivotClause: `strengthening consistency ${prepWithShort} remains an area for continued focus`,
+        consolidationSentence: `Consolidating ${nounForConsolidate} is an important focus for ongoing growth.`,
+        whileClause: `${tokens.subjectLower} ${v(tokens, 'is', 'are')} continuing to build consistency ${prepWithShort}`,
+        prepWithShort,
+        prepInShort
+      }
+    case '2':
+      return {
+        diagnosticSentence: idx % 2 === 0
+          ? `Building steadier accuracy ${prepWithShort} is ${tokens.possessive} next learning milestone.`
+          : `Further guided practice is needed when ${gGerund} to build confidence.`,
+        pivotClause: `consolidating accuracy ${prepWithShort} remains an area for continued growth`,
+        consolidationSentence: `Consolidating ${nounForConsolidate} with regular practice is a key focus.`,
+        whileClause: `${tokens.subjectLower} ${v(tokens, 'works', 'work')} to consolidate accuracy ${prepWithShort}`,
+        prepWithShort,
+        prepInShort
+      }
+    default: // '1' or 'R' when overall is higher
+      return {
+        diagnosticSentence: `Targeted practice ${prepWithShort} is needed to strengthen foundational accuracy.`,
+        pivotClause: `building foundational familiarity ${prepWithShort} requires guided support`,
+        consolidationSentence: `Strengthening ${nounForConsolidate} through structured practice is a priority.`,
+        whileClause: `${tokens.subjectLower} ${v(tokens, 'builds', 'build')} foundational confidence ${prepWithShort}`,
+        prepWithShort,
+        prepInShort
+      }
+  }
+}
+
+function getToolGoalSuffix(growthLevel, dept, isFinal, tokens, gShort, variant = 0) {
+  const isStem = dept === 'science' || dept === 'math'
+  const idx = Math.abs(variant)
+  const shortIsGerund = isGerundPhrase(gShort)
+  const inShort = shortIsGerund ? `when ${gShort}` : `in ${gShort}`
+
+  if (isFinal) {
+    if (growthLevel.key === 'R') {
+      return {
+        outcome: 'rebuild core expectations toward credit recovery',
+        finalFull: null // Handled explicitly for Level R credit recovery
+      }
+    }
+    const finalMap = {
+      '4+': ['carry deep analytical insight into senior courses', 'tackle rigorous inquiries in subsequent studies'],
+      '4': ['sustain high precision in senior courses', 'excel across multi-step challenges in subsequent studies'],
+      '3': ['consolidate core skills for subsequent studies', 'transition smoothly into higher-level coursework'],
+      '2': ['reinforce core concepts for future academic studies', 'build readiness prior to subsequent courses'],
+      '1': ['review foundational skills before subsequent courses', 'solidify essential concepts for future academic studies']
+    }
+    const list = finalMap[growthLevel.key] || finalMap['3']
+    return { outcome: list[idx % list.length], finalFull: null }
+  }
+
+  const termMap = {
+    '4+': [
+      'extend mastery to non-routine challenges',
+      'justify nuanced conclusions clearly',
+      'explore complex applications independently'
+    ],
+    '4': isStem
+      ? [
+          'verify multi-step solutions and reach Level 4+ consistency',
+          'articulate full reasoning on evaluations',
+          'refine technical explanations to Level 4+ depth'
+        ]
+      : [
+          'refine supporting evidence and reach Level 4+ consistency',
+          'elevate analytical depth on evaluations',
+          'polish nuanced arguments across evaluations'
+        ],
+    '3': isStem
+      ? [
+          'verify intermediate steps systematically',
+          'consolidate accuracy before evaluations',
+          'organize key steps and check solutions',
+          'strengthen precision during unit practice'
+        ]
+      : [
+          'organize supporting evidence clearly',
+          'strengthen clarity before evaluations',
+          'structure analytical arguments consistently',
+          'refine written depth during practice'
+        ],
+    '2': isStem
+      ? [
+          'break multi-step problems into clear steps',
+          'build steadier confidence during practice',
+          'organize core procedures and check accuracy'
+        ]
+      : [
+          'structure written ideas clearly',
+          'build steadier confidence during practice',
+          'connect key evidence to main points'
+        ],
+    '1': [
+      'organize foundational steps with extra help',
+      'build confidence alongside guided practice',
+      'reinforce core skills step by step'
+    ],
+    'R': [
+      'complete essential tasks and build toward the provincial standard',
+      'strengthen core skills with tutorial support',
+      'rebuild foundational competencies step by step'
+    ]
+  }
+  const list = termMap[growthLevel.key] || termMap['3']
+  return { outcome: list[idx % list.length], finalFull: null }
+}
+
+function formatToolPhrase(tool) {
+  const clean = String(tool || 'a structured revision checklist').trim()
+  if (/^(?:using|utilizing|listing|reviewing|checking)\b/i.test(clean)) {
+    return clean.replace(/^(?:using|utilizing)\s+/i, '')
+  }
+  return clean
+}
+
+/**
+ * Generates a single secondary report card comment candidate using one of 6 ORCCG Syntactic Blueprints.
+ */
+function buildSecondaryBlueprintCandidate({
+  blueprintIdx,
+  tier, // 'standard' | 'compact' | 'ultraCompact'
+  stemVariant,
+  tokens,
+  overallLevel,
+  strengthLevel,
+  growthLevel,
+  strengthTask,
+  strengthShortTopic,
+  growthTask,
+  growthShortTopic,
+  recommendedTool,
+  profileKey,
+  dept,
+  isFinal,
+  seedNum
+}) {
+  const isCompact = tier === 'compact' || tier === 'ultraCompact'
+  const isUltra = tier === 'ultraCompact'
+  const isBelowStandard = overallLevel.key === 'R' || overallLevel.key === '1'
+
+  const rawS = strengthTask || (dept === 'math' ? 'solving core mathematical problems' : (dept === 'science' ? 'analyzing core scientific concepts' : 'analyzing core course texts'))
+  const rawG = growthTask || (dept === 'math' ? 'organizing multi-step mathematical solutions' : (dept === 'science' ? 'verifying scientific problem steps' : 'supporting written arguments with evidence'))
+
+  const sGerund = toGerundPhraseSafe(rawS)
+  const gGerund = toGerundPhraseSafe(rawG)
+
+  const sShortRaw = strengthShortTopic || formatCurriculumTopic(rawS) || 'core concepts'
+  const gShortRaw = growthShortTopic || formatCurriculumTopic(rawG) || 'core skills'
+
+  const sShort = isUltra ? condenseTopicForNextStep(sShortRaw) : sShortRaw
+  const gShort = isUltra ? condenseTopicForNextStep(gShortRaw) : gShortRaw
+
+  const tool = formatToolPhrase(recommendedTool)
+  const prof = getProfileBlueprintContext(profileKey, dept, isBelowStandard, stemVariant)
+  const strengthQual = getStrengthQualifierPhrase(
+    isBelowStandard && !['1', 'R'].includes(strengthLevel.key) ? ACHIEVEMENT_LEVELS.LEVEL_3 : strengthLevel,
+    isBelowStandard,
+    stemVariant
+  ).replace(/\btheir\b/gi, tokens.possessive)
+
+  const growthGap = getGrowthGapPhrasing(tokens, growthLevel, overallLevel, gGerund, gShort, isCompact, stemVariant)
+  const goal = getToolGoalSuffix(growthLevel, dept, isFinal, tokens, gShort, stemVariant)
+
+  // Special Level R Final Sentence (Ontario credit recovery / summer school / guidance mandate)
+  const finalLevelRNextStep = isCompact
+    ? `To work toward credit recovery, ${tokens.name} should consult guidance regarding summer school and use ${tool}.`
+    : `To work toward credit recovery, ${tokens.name} should consult with guidance about summer school and use ${tool} ${growthGap.prepInShort}.`
+
+  const buildS3 = (starter = 'Using') => {
+    if (isFinal && overallLevel.key === 'R') {
+      return finalLevelRNextStep
+    }
+    if (isFinal) {
+      if (starter === 'Moving forward') {
+        return `Moving forward into senior courses, ${tokens.subjectLower} can use ${tool} to ${goal.outcome}.`
+      }
+      return `${starter} ${tool} will help ${tokens.obj || tokens.object} ${goal.outcome}.`
+    }
+    if (starter === 'Moving forward') {
+      return `Moving forward, ${tokens.subjectLower} would benefit from using ${tool} to ${goal.outcome}.`
+    }
+    return `${starter} ${tool} will support ${tokens.name} to ${goal.outcome}.`
+  }
+
+  // Note: tokens.object is the property name
+  const objTok = tokens.object
+
+  // When seedNum === 0 and blueprintIdx === 0 (standard), emit exact legacy-compatible Core Triad 3-sentence form
+  if (seedNum === 0 && blueprintIdx === 0 && tier === 'standard') {
+    const s1 = isBelowStandard
+      ? `${tokens.name} showed ${tokens.possessive} strongest understanding when ${sGerund}.`
+      : `${capitalizeFirst(sGerund)}, ${tokens.name} ${v(tokens, 'demonstrates', 'demonstrate')} ${strengthQual}.`
+
+    let s2 = ''
+    if (isBelowStandard) {
+      s2 = isGerundPhrase(gGerund)
+        ? `Developing consistency when ${gGerund} is needed, while overall achievement remains below the provincial standard.`
+        : `Building foundational skills in ${gShort} is needed, while overall achievement remains below the provincial standard.`
+    } else if (isGerundPhrase(rawG)) {
+      s2 = `${tokens.possessiveCapital} next learning focus is ${rawG}.`
+    } else {
+      s2 = `${tokens.possessiveCapital} next learning focus is strengthening consistency with ${gShort}.`
+    }
+
+    const s3 = (isFinal && overallLevel.key === 'R')
+      ? finalLevelRNextStep
+      : (isFinal
+        ? `As ${tokens.name} advances to senior courses, using ${tool} will help ${objTok} ${goal.outcome}.`
+        : `Using ${tool} will help ${objTok} ${goal.outcome}.`)
+
+    const text = [s1, s2, s3].join(' ')
+    return { blueprintId: 'blueprint-1', s1, s2, s3: s3, text }
+  }
+
+  let s1 = ''
+  let s2 = ''
+  let s3 = ''
+
+  switch (blueprintIdx) {
+    case 0: {
+      // Blueprint 1: 3-Sentence (Context/Gerund Strength -> Diagnostic Growth Milestone -> Tool-First Next Step)
+      s1 = isBelowStandard
+        ? `${tokens.name} showed ${tokens.possessive} strongest understanding when ${sGerund}.`
+        : (isCompact
+          ? `${tokens.name} ${v(tokens, 'shows', 'show')} ${strengthQual} when ${sGerund}.`
+          : `${prof.opener} ${tokens.name} ${v(tokens, 'demonstrates', 'demonstrate')} ${strengthQual} when ${sGerund}.`)
+      s2 = growthGap.diagnosticSentence
+      s3 = (isFinal && overallLevel.key === 'R')
+        ? finalLevelRNextStep
+        : (isFinal
+          ? `Using ${tool} in subsequent studies will help ${objTok} ${goal.outcome}.`
+          : `Using ${tool} will help ${objTok} ${goal.outcome}.`)
+      return { blueprintId: 'blueprint-1', s1, s2, s3, text: [s1, s2, s3].join(' ') }
+    }
+
+    case 1: {
+      // Blueprint 2: 2-Sentence Merged (Name-First `though` Pivot -> Actionable Tool)
+      const sLead = isBelowStandard
+        ? `${tokens.name} achieved ${tokens.possessive} best results when ${sGerund}`
+        : `${tokens.name} ${v(tokens, 'tackles', 'tackle')} ${isGerundPhrase(sShort) ? `tasks when ${sShort}` : sShort} with ${strengthQual}`
+      s1 = `${sLead}, though ${growthGap.pivotClause}.`
+      if (isFinal && overallLevel.key === 'R') {
+        s2 = finalLevelRNextStep
+      } else if (isFinal) {
+        s2 = `To prepare for subsequent studies, ${tokens.subjectLower} ${v(tokens, 'is', 'are')} encouraged to use ${tool} to ${goal.outcome}.`
+      } else {
+        s2 = isCompact
+          ? `Using ${tool} will help ${objTok} ${goal.outcome}.`
+          : `For continued growth, ${tokens.subjectLower} ${v(tokens, 'is', 'are')} encouraged to use ${tool} to ${goal.outcome}.`
+      }
+      return { blueprintId: 'blueprint-2', s1, s2, s3: '', text: [s1, s2].join(' ') }
+    }
+
+    case 2: {
+      // Blueprint 3: 3-Sentence (Modality/Profile Opener -> Diagnostic Growth Area -> Strategy Recommendation)
+      s1 = isBelowStandard
+        ? `${prof.opener} ${tokens.name} showed ${strengthQual} when ${sGerund}.`
+        : `${prof.opener} ${tokens.name} ${v(tokens, 'applies', 'apply')} ${strengthLevel.adjective} skill when ${sGerund}.`
+      s2 = isBelowStandard
+        ? growthGap.diagnosticSentence
+        : (isCompact
+          ? `Further practice is needed ${growthGap.prepInShort}.`
+          : `Further practice is needed when ${gGerund} to build steadier accuracy.`)
+      s3 = (isFinal && overallLevel.key === 'R')
+        ? finalLevelRNextStep
+        : (isFinal
+          ? `Utilizing ${tool} will support ${tokens.name} as ${tokens.subjectLower} ${v(tokens, 'transitions', 'transition')} to higher-level coursework.`
+          : `Utilizing ${tool} will help ${tokens.name} ${goal.outcome}.`)
+      return { blueprintId: 'blueprint-3', s1, s2, s3, text: [s1, s2, s3].join(' ') }
+    }
+
+    case 3: {
+      // Blueprint 4: 2-Sentence Merged (Strength + Profile Clause -> Merged Growth + Tool via `by using`)
+      s1 = isBelowStandard
+        ? `${tokens.name} showed ${strengthQual} when ${sGerund}, ${growthGap.pivotClause}.`
+        : (isCompact
+          ? `${tokens.name} ${v(tokens, 'demonstrates', 'demonstrate')} ${strengthQual} when ${sGerund}.`
+          : `${tokens.name} ${v(tokens, 'demonstrates', 'demonstrate')} ${strengthQual} when ${sGerund}, ${prof.tail}.`)
+      if (isFinal && overallLevel.key === 'R') {
+        s2 = finalLevelRNextStep
+      } else if (isFinal) {
+        s2 = `In future academic studies, ${tokens.subjectLower} can strengthen accuracy ${growthGap.prepInShort} by using ${tool} to ${goal.outcome}.`
+      } else {
+        s2 = `${tokens.subject} can strengthen ${tokens.possessive} accuracy ${growthGap.prepWithShort} by using ${tool} to ${goal.outcome}.`
+      }
+      return { blueprintId: 'blueprint-4', s1, s2, s3: '', text: [s1, s2].join(' ') }
+    }
+
+    case 4: {
+      // Blueprint 5: 3-Sentence (Participial/Qualifier Opener -> Growth Focus -> Forward Next Step)
+      const verbChoice = isBelowStandard
+        ? `showed ${tokens.possessive} clearest grasp`
+        : `${v(tokens, 'excels', 'excel')} with ${strengthQual}`
+      s1 = (isBelowStandard || isCompact)
+        ? `${tokens.name} ${verbChoice} when ${sGerund}.`
+        : `Working with ${strengthQual}, ${tokens.name} ${v(tokens, 'performs', 'perform')} effectively when ${sGerund}.`
+      s2 = growthGap.consolidationSentence
+      s3 = (isFinal && overallLevel.key === 'R')
+        ? finalLevelRNextStep
+        : buildS3('Moving forward')
+      return { blueprintId: 'blueprint-5', s1, s2, s3, text: [s1, s2, s3].join(' ') }
+    }
+
+    default: {
+      // Blueprint 6: 2-Sentence Merged (`When`-Strength Opener -> `While`-Pivot Growth + Tool in Sentence 2)
+      s1 = isBelowStandard
+        ? `When ${sGerund}, ${tokens.name} showed ${strengthQual}.`
+        : `When ${sGerund}, ${tokens.name} ${v(tokens, 'applies', 'apply')} course concepts with ${strengthQual}${isCompact ? '' : prof.shortTail}.`
+      if (isFinal && overallLevel.key === 'R') {
+        s2 = `While ${growthGap.whileClause}, ${tokens.name} should consult with guidance regarding credit recovery or summer school.`
+      } else if (isFinal) {
+        s2 = `While ${growthGap.whileClause}, utilizing ${tool} in senior courses will help ${objTok} ${goal.outcome}.`
+      } else {
+        s2 = `While ${growthGap.whileClause}, utilizing ${tool} will help ${objTok} ${goal.outcome}.`
+      }
+      return { blueprintId: 'blueprint-6', s1, s2, s3: '', text: [s1, s2].join(' ') }
+    }
+  }
+}
+
+function toGerundPhraseSafe(task) {
+  const clean = formatCurriculumTopic(task)
+  if (!clean) return 'applying core course concepts'
+  return isGerundPhrase(clean) ? clean : makeGerund(clean)
+}
+
 // ─── Main Public Generator Function ──────────────────────────────────────────
 
 /**
  * Generates a complete, compliant report card comment for a student.
- *
- * @param {Object} params
- * @param {Object} params.student            Student record ({ firstName, preferredName, pronouns, ... })
- * @param {Object} [params.gradeData]          Grades object ({ percentage, level, assessments, sbarExpectations, categories })
- * @param {Object} [params.learningSkills]     Ontario Learning Skills ({ responsibility, organization, ... })
- * @param {Object} [params.options]            Configuration options
- * @param {'secondary'|'elementary'} [params.options.mode='secondary']
- * @param {number} [params.options.charLimit=400]
- * @param {'preferred'|'name-only'|'roster'} [params.options.pronounMode='preferred']
- * @param {string} [params.options.featuredStrength]  Manual override for featured strength task
- * @param {string} [params.options.featuredNextStep]  Manual override for featured next step task
- * @param {number|string} [params.options.variantSeed]  Seed for varying sentence phrasing (auto-derived per studentId if omitted)
- * @param {boolean} [params.options.includeWorkHabits=false]
- * @param {string} [params.options.courseCode='']
- * @param {string} [params.options.reportingPeriod='Midterm']
- * @param {boolean} [params.options.isFinal=false]
- * @param {string} [params.options.profileFocus='auto']
- *
- * @returns {{
- *   text: string,
- *   charCount: number,
- *   wordCount: number,
- *   isOverLimit: boolean,
- *   charLimit: number,
- *   achievementLevel: Object,
- *   strengthLevel: Object,
- *   growthLevel: Object,
- *   strengthSource: string,
- *   growthSource: string,
- *   strengthTask: string,
- *   growthTask: string,
- *   strengthScore: number|null,
- *   growthScore: number|null,
- *   profileFocus: string,
- *   profileFocusLabel: string,
- *   profileBadge: string,
- *   profileMetric: string
- * }}
  */
 export function generateReportComment({
   student = {},
@@ -1852,8 +1982,8 @@ export function generateReportComment({
 
   const resolvedIsFinal = Boolean(isFinal || reportingPeriod === 'Final')
   const resolvedCourseCode = courseCode || gradeData.courseCode || student.courseCode || ''
+  const dept = getDepartmentGroup(resolvedCourseCode)
 
-  // 1. Determine level, pronoun tokens, and deterministic student variant seed
   const overallLevel = getAchievementLevel(gradeData.level || gradeData.percentage)
   const tokens = getPronounTokens(student, pronounMode)
 
@@ -1866,16 +1996,29 @@ export function generateReportComment({
     seedNum = computeStudentVariantSeed(student, reportingPeriod)
   }
 
-  // 2. Resolve specific evidence tasks & calibrate levels (varying competency phrasing per student seed)
-  const autoEvidence = extractEvidenceFromGrades(gradeData, resolvedCourseCode)
+  // Extract evidence with retest, cutoff, note, and tool awareness
+  const autoEvidence = extractEvidenceFromGrades(gradeData, resolvedCourseCode, {
+    isFinal: resolvedIsFinal,
+    reportingPeriod,
+    variantSeed: seedNum
+  })
+
   const rawStrength = featuredStrength || autoEvidence.strengthTask || ''
   const rawGrowth = featuredNextStep || autoEvidence.growthTask || ''
   const strengthCompVariant = seedNum
   const growthCompVariant = seedNum === 0 ? 0 : seedNum + 1
+  const toolVariant = seedNum + Math.floor(seedNum / 6)
+
   const strengthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawStrength, resolvedCourseCode, '', strengthCompVariant) : '') || rawStrength
   const growthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawGrowth, resolvedCourseCode, '', growthCompVariant) : '') || rawGrowth
 
-  // Resolve score for manually selected assessment if applicable
+  const strengthShortTopic = (resolvedCourseCode ? mapAssessmentToShortTopic(rawStrength, resolvedCourseCode, '', strengthCompVariant) : '') || autoEvidence.strengthShortTopic || formatCurriculumTopic(strengthTask)
+  const growthShortTopic = (resolvedCourseCode ? mapAssessmentToShortTopic(rawGrowth, resolvedCourseCode, '', growthCompVariant) : '') || autoEvidence.growthShortTopic || formatCurriculumTopic(growthTask)
+  const recommendedTool = featuredNextStep
+    ? mapAssessmentToTool(rawGrowth, resolvedCourseCode, '', toolVariant)
+    : (autoEvidence.recommendedTool || mapAssessmentToTool(rawGrowth, resolvedCourseCode, '', toolVariant))
+
+  // Resolve manual task scores when overridden
   const findSelectedScore = (selectedLabel) => {
     if (!selectedLabel || !Array.isArray(gradeData?.assessments)) return null
     const targetLower = String(selectedLabel).trim().toLowerCase()
@@ -1888,180 +2031,124 @@ export function generateReportComment({
     return match ? match.scorePercent : null
   }
 
-  // Calibrate strength sentence to selected task score or auto strengthScore
   const manualStrengthScore = featuredStrength ? findSelectedScore(featuredStrength) : null
   const sScore = manualStrengthScore !== null ? manualStrengthScore : autoEvidence.strengthScore
   let strengthLevel = (typeof sScore === 'number' && !isNaN(sScore)) ? getAchievementLevel(sScore) : overallLevel
-  // If overall mark is Level 2+, strength task shouldn't use Level 1/R phrasing
   if ((overallLevel.key === '3' || overallLevel.key === '4' || overallLevel.key === '4+') && (strengthLevel.key === '1' || strengthLevel.key === 'R')) {
     strengthLevel = overallLevel
   }
-  // If overall mark is Level 2, cap strength tone at Level 3 so it doesn't overstate with "excels with thorough insight"
   if (overallLevel.key === '2' && (strengthLevel.key === '4+' || strengthLevel.key === '4')) {
     strengthLevel = ACHIEVEMENT_LEVELS.LEVEL_3
   }
 
-  // Calibrate growth sentence to selected task score or auto growthScore
   const manualGrowthScore = featuredNextStep ? findSelectedScore(featuredNextStep) : null
   const gScore = manualGrowthScore !== null ? manualGrowthScore : autoEvidence.growthScore
-  let growthLevel = (typeof gScore === 'number' && !isNaN(gScore)) ? getAchievementLevel(gScore) : overallLevel
+  const growthLevel = (typeof gScore === 'number' && !isNaN(gScore)) ? getAchievementLevel(gScore) : overallLevel
 
-  // Derive pedagogical profile focus
   const resolvedProfileFocus = (profileFocus && profileFocus !== 'auto') ? profileFocus : (autoEvidence.profileFocus || 'curriculum_general')
   const profile = deriveStudentProfileFocus(gradeData, learningSkills, {
     ...options,
     profileFocus: resolvedProfileFocus
   })
 
-  // Mixed-radix sentence indices across expanded 6-8 template pools:
-  // - For seedNum 0..7, Math.floor(seedNum / 8) === 0 and Math.floor(seedNum / 64) === 0,
-  //   preserving exact (seedNum, seedNum + 1, seedNum + 2) offsets.
-  // - Across seedNum 0..511, visits up to 8 x 8 x 8 = 512 unique 3-sentence combinations!
-  const s1Base = seedNum
-  const s2Base = seedNum + Math.floor(seedNum / 8) + 1
-  const s3Base = seedNum < 4
-    ? seedNum + 2
-    : seedNum * 5 + Math.floor(seedNum / 8) + Math.floor(seedNum / 64) + 2
-
-  // Helper generator functions for standard and compact sentences
-  const getS1 = (compact, offset = 0) => getStrengthPhrases(tokens, strengthLevel, strengthTask, s1Base + offset, { compact, courseCode: resolvedCourseCode, overallLevelKey: overallLevel.key })
-  const getS2 = (compact, offset = 0) => {
-    if (mode === 'secondary') {
-      return getCurriculumApplicationPhrases(tokens, overallLevel, s2Base + offset, {
-        profileFocus: (profile.key === 'work_habits' ? 'curriculum_general' : profile.key),
-        learningSkills,
-        compact,
-        mode: 'secondary',
-        courseCode: resolvedCourseCode
-      })
-    }
-    if (includeWorkHabits || profile.key === 'work_habits') {
-      return getWorkHabitPhrases(tokens, learningSkills, s2Base + offset, { compact })
-    }
-    return getCurriculumApplicationPhrases(tokens, overallLevel, s2Base + offset, {
-      profileFocus: profile.key,
-      learningSkills,
-      compact,
-      mode,
-      courseCode: resolvedCourseCode
-    })
-  }
-  const getS3 = (compact, offset = 0) => getNextStepPhrases(tokens, growthLevel, growthTask, s3Base + offset, {
-    isFinal: resolvedIsFinal,
-    courseCode: resolvedCourseCode,
-    compact
-  })
-
   let fullComment = ''
+  let selectedBlueprintId = 'elementary'
 
   if (mode === 'elementary') {
-    // Elementary: Structured two-paragraph narrative
-    const sentence1 = getS1(false, 0)
-    const sentence2 = getS2(false, 0)
-    const sentence3 = getS3(false, 0)
-    const para1 = [sentence1, sentence2].filter(Boolean).join(' ')
+    const s1 = getStrengthPhrases(tokens, strengthLevel, strengthTask, seedNum, { compact: false, courseCode: resolvedCourseCode, overallLevelKey: overallLevel.key })
+    const s2 = (includeWorkHabits || profile.key === 'work_habits')
+      ? getWorkHabitPhrases(tokens, learningSkills, seedNum + 1, { compact: false })
+      : getCurriculumApplicationPhrases(tokens, overallLevel, seedNum + 1, {
+          profileFocus: profile.key,
+          learningSkills,
+          compact: false,
+          mode,
+          courseCode: resolvedCourseCode
+        })
+    const s3 = getNextStepPhrases(tokens, growthLevel, growthTask, seedNum + 2, {
+      isFinal: resolvedIsFinal,
+      courseCode: resolvedCourseCode,
+      compact: false
+    })
+    const para1 = [s1, s2].filter(Boolean).join(' ')
     const para2 = [
-      sentence3,
+      s3,
       `Continued partnership between home and school will support ${tokens.name}'s ongoing learning.`
     ].join(' ')
     fullComment = `${para1}\n\n${para2}`
   } else {
-    // Secondary: Strictly concise 3-sentence body within charLimit (~400 chars)
-    // Combinatorial Solver: ALWAYS preserves all 3 Growing Success sentences without dropping Sentence 2!
-    // Evaluates across s1Offset (0..3), s2Offset (0..3), and s3Offset (0..3)
-    // Enforces <= charLimit AND avoids repetitive verbs between Sentence 1 and Sentence 2!
-    const stdS1 = getS1(false, 0)
-    const stdS2 = getS2(false, 0)
-    const stdS3 = getS3(false, 0)
-    const initialCand = [stdS1, stdS2, stdS3].filter(Boolean).join(' ')
+    const startBp = seedNum % 6
+    const startStem = Math.floor(seedNum / 6)
+    const targetMin = charLimit >= 360 ? 295 : Math.max(120, Math.floor(charLimit * 0.6))
 
-    if (initialCand.length <= charLimit && !hasVerbClash(stdS1, stdS2)) {
-      fullComment = initialCand
-    } else {
-      let fitted = ''
+    const tiers = ['standard', 'compact', 'ultraCompact']
+    let bestInRange = null
+    let bestShort = null
+    let bestWithClash = null
 
-      // First, try to preserve this seed's specific S1 and S3 selection (s1Offset = 0, s3Offset = 0),
-      // only stepping s2Offset if needed to avoid a verb clash, across progressively more compact tiers.
-      // This prevents different student seeds from collapsing onto the single shortest standard template.
-      const compactTiers = [
-        [false, false, false],
-        [false, true, false],
-        [false, true, true],
-        [true, true, true]
-      ]
+    for (const tier of tiers) {
+      for (let bpOff = 0; bpOff < 6; bpOff++) {
+        const bpIdx = (startBp + bpOff) % 6
+        for (let stemOff = 0; stemOff < 3; stemOff++) {
+          const cand = buildSecondaryBlueprintCandidate({
+            blueprintIdx: bpIdx,
+            tier,
+            stemVariant: startStem + stemOff,
+            tokens,
+            overallLevel,
+            strengthLevel,
+            growthLevel,
+            strengthTask,
+            strengthShortTopic,
+            growthTask,
+            growthShortTopic,
+            recommendedTool,
+            profileKey: profile.key === 'work_habits' ? 'curriculum_general' : profile.key,
+            dept,
+            isFinal: resolvedIsFinal,
+            seedNum: (bpOff === 0 && stemOff === 0) ? seedNum : (seedNum || 1)
+          })
 
-      for (const [c1, c2, c3] of compactTiers) {
-        if (fitted) break
-        const s1 = getS1(c1, 0)
-        const s3 = getS3(c3, 0)
-        for (let s2Offset = 0; s2Offset < 4; s2Offset++) {
-          const s2 = getS2(c2, s2Offset)
-          if (!hasVerbClash(s1, s2)) {
-            const cand = [s1, s2, s3].filter(Boolean).join(' ')
-            if (cand.length <= charLimit) {
-              fitted = cand
+          const normalizedText = enforceCanadianSpelling(cand.text)
+          const len = normalizedText.length
+          const clash = hasVerbClash(cand.s1, cand.s2)
+
+          if (len <= charLimit) {
+            if (!clash && len >= targetMin) {
+              bestInRange = { ...cand, text: normalizedText }
               break
             }
-          }
-        }
-      }
-
-      // Helper to evaluate candidates across all offsets (s1Offset, s2Offset, s3Offset) as a fallback
-      const findBestCandidate = (compactS1, compactS2, compactS3) => {
-        let candidateAny = ''
-        for (let s1Offset = 0; s1Offset < 4; s1Offset++) {
-          const altS1 = getS1(compactS1, s1Offset)
-          for (let s2Offset = 0; s2Offset < 4; s2Offset++) {
-            const altS2 = getS2(compactS2, s2Offset)
-            const clash = hasVerbClash(altS1, altS2)
-            for (let s3Offset = 0; s3Offset < 4; s3Offset++) {
-              const altS3 = getS3(compactS3, s3Offset)
-              const cand = [altS1, altS2, altS3].filter(Boolean).join(' ')
-              if (cand.length <= charLimit) {
-                if (!clash) {
-                  return cand // Immediate return: fits <= charLimit and zero verb clash!
-                }
-                if (!candidateAny) {
-                  candidateAny = cand
-                }
-              }
+            if (!clash && (!bestShort || len > bestShort.text.length)) {
+              bestShort = { ...cand, text: normalizedText }
+            }
+            if (!bestWithClash) {
+              bestWithClash = { ...cand, text: normalizedText }
             }
           }
         }
-        return candidateAny
+        if (bestInRange) break
       }
+      if (bestInRange) break
+    }
 
-      // Fallback Tier 1: Standard S1 + Standard S2 + Standard S3
-      if (!fitted) {
-        fitted = findBestCandidate(false, false, false)
-      }
-
-      // Tier 2: Standard S1 + Compact S2 + Standard S3
-      if (!fitted) {
-        fitted = findBestCandidate(false, true, false)
-      }
-
-      // Tier 3: Standard S1 + Compact S2 + Compact S3
-      if (!fitted) {
-        fitted = findBestCandidate(false, true, true)
-      }
-
-      // Tier 4: Compact S1 + Compact S2 + Compact S3
-      if (!fitted) {
-        fitted = findBestCandidate(true, true, true)
-      }
-
-      // Tier 5: Emergency 3-sentence guarantee (ultra-compact, guaranteed <= 200 chars)
-      if (!fitted) {
-        const shortCleanStrength = formatCurriculumTopic(strengthTask)
-        const shortCleanGrowth = formatCurriculumTopic(growthTask)
-        const emergencyS1 = `${tokens.name} excels with ${strengthLevel.adjective} capability in ${shortCleanStrength}.`
-        const emergencyS2 = `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} concepts with ${overallLevel.adjective} consistency.`
-        const emergencyS3 = `Regular review of ${shortCleanGrowth} will support ongoing success.`
-        fitted = [emergencyS1, emergencyS2, emergencyS3].join(' ')
-      }
-
-      fullComment = fitted
+    const chosen = bestInRange || bestShort || bestWithClash
+    if (chosen) {
+      fullComment = chosen.text
+      selectedBlueprintId = chosen.blueprintId
+    } else {
+      // Emergency ultra-short Core Triad fallback strictly <= charLimit (e.g. charLimit <= 220)
+      const shortS = condenseTopicForNextStep(strengthShortTopic || 'core concepts')
+      const shortG = condenseTopicForNextStep(growthShortTopic || 'core skills')
+      const shortTool = formatToolPhrase(recommendedTool)
+      const emergencyBridge = (overallLevel.key === 'R' || overallLevel.key === '1')
+        ? 'though achievement remains below standard'
+        : `though ${shortG} needs practice`
+      const em1 = `${tokens.name} showed skill in ${shortS}, ${emergencyBridge}.`
+      const em2 = (resolvedIsFinal && overallLevel.key === 'R')
+        ? `Consulting guidance on credit recovery is advised.`
+        : `Using ${shortTool} will support progress.`
+      fullComment = `${em1} ${em2}`
+      selectedBlueprintId = 'blueprint-2'
     }
   }
 
@@ -2083,6 +2170,10 @@ export function generateReportComment({
     growthSource: featuredNextStep ? 'manual' : autoEvidence.growthSource,
     strengthTask,
     growthTask,
+    strengthShortTopic,
+    growthShortTopic,
+    recommendedTool,
+    blueprintId: selectedBlueprintId,
     strengthScore: autoEvidence.strengthScore,
     growthScore: autoEvidence.growthScore,
     profileFocus: profile.key,
