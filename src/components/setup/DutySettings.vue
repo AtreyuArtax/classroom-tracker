@@ -88,19 +88,19 @@
       </div>
 
       <p class="setup__hint" style="margin-top: -4px; margin-bottom: 0;">
-        Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and time slot. Select "None" for ad-hoc duties (like On-call, OSSLT, or Emergency) so they default to no day pre-selected.
+        Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and preset start times. Add multiple start times if a duty can occur in different time slots. Select "None" for ad-hoc duties (like On-call, OSSLT, or Emergency) so they default to no day pre-selected.
       </p>
 
       <div class="duty-settings__table-wrap">
         <table class="duty-settings__table">
           <thead>
             <tr>
-              <th style="min-width: 170px;">Duty Name</th>
-              <th style="width: 110px;">Default Min</th>
-              <th style="min-width: 245px;">Schedule Days</th>
-              <th style="width: 145px;">Start Time</th>
-              <th style="width: 110px; text-align: center;">Emergency?</th>
-              <th style="width: 60px; text-align: center;">Remove</th>
+              <th style="min-width: 130px;">Duty Name</th>
+              <th style="width: 78px;">Min</th>
+              <th style="min-width: 210px;">Schedule Days</th>
+              <th style="min-width: 165px;">Start Times</th>
+              <th style="width: 74px; text-align: center;" title="Flag as contractual emergency on-call">Emerg?</th>
+              <th style="width: 54px; text-align: center;">Remove</th>
             </tr>
           </thead>
           <tbody>
@@ -161,12 +161,61 @@
                 </div>
               </td>
               <td>
-                <input
-                  v-model="duty.defaultStartTime"
-                  type="time"
-                  class="setup__input duty-settings__time-input"
-                  placeholder="08:15"
-                />
+                <div class="duty-settings__times-cell">
+                  <span
+                    v-for="timeVal in (duty.presetStartTimes || [])"
+                    :key="timeVal"
+                    class="duty-settings__time-chip"
+                  >
+                    <span>{{ formatDutyTime(timeVal) }}</span>
+                    <button
+                      type="button"
+                      class="duty-settings__time-chip-remove"
+                      :title="`Remove ${formatDutyTime(timeVal)}`"
+                      :aria-label="`Remove ${formatDutyTime(timeVal)}`"
+                      @click="removePresetTime(duty, timeVal)"
+                    >
+                      <X :size="11" />
+                    </button>
+                  </span>
+
+                  <div v-if="addingTimeForIdx === idx" class="duty-settings__time-add-row">
+                    <input
+                      v-model="pendingTimeInput"
+                      type="time"
+                      class="setup__input duty-settings__time-input"
+                      @keydown.enter.prevent="confirmAddPresetTime(duty)"
+                      @keydown.esc.prevent="cancelAddPresetTime"
+                    />
+                    <button
+                      type="button"
+                      class="duty-settings__time-confirm-btn"
+                      title="Add preset time"
+                      @click="confirmAddPresetTime(duty)"
+                    >
+                      <Check :size="13" />
+                    </button>
+                    <button
+                      type="button"
+                      class="duty-settings__time-cancel-btn"
+                      title="Cancel"
+                      @click="cancelAddPresetTime"
+                    >
+                      <X :size="13" />
+                    </button>
+                  </div>
+
+                  <button
+                    v-else
+                    type="button"
+                    class="duty-settings__time-add-pill"
+                    :title="`Add preset start time for ${duty.name}`"
+                    @click="startAddPresetTime(idx, duty)"
+                  >
+                    <Plus :size="12" />
+                    <span>{{ (duty.presetStartTimes && duty.presetStartTimes.length > 0) ? 'Time' : 'Add time' }}</span>
+                  </button>
+                </div>
               </td>
               <td style="text-align: center;">
                 <label class="duty-settings__checkbox-wrap" title="Flags as an emergency on-call">
@@ -207,10 +256,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Check, Clock, Eye, ListPlus, Plus, RotateCcw, Trash2 } from 'lucide-vue-next'
+import { Check, Clock, Eye, ListPlus, Plus, RotateCcw, Trash2, X } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useDutyTracker } from '../../composables/useDutyTracker.js'
 import { useMessage } from '../../composables/useMessage.js'
+import { formatDutyTime, normalizePresetStartTimes } from '../../utils/dutyTimeUtils.js'
 
 const { showDutiesNav, updateShowDutiesNav } = useClassroom()
 const { dutySettings, loadSettings, updateSettings, resetSettingsToDefaults } = useDutyTracker()
@@ -218,6 +268,8 @@ const { confirm } = useMessage()
 
 const isSaving = ref(false)
 const saveMessage = ref('')
+const addingTimeForIdx = ref(null)
+const pendingTimeInput = ref('11:20')
 
 const form = ref({
   allottedMinutes: 1875,
@@ -268,6 +320,8 @@ function syncForm() {
     } else {
       d.defaultDays = d.defaultWeekdays.length
     }
+    d.presetStartTimes = normalizePresetStartTimes(d)
+    d.defaultStartTime = d.presetStartTimes[0] || ''
   }
 
   form.value = {
@@ -305,6 +359,33 @@ function toggleDutyWeekday(duty, dayKey) {
   duty.defaultDays = duty.defaultWeekdays.length
 }
 
+function startAddPresetTime(idx, duty) {
+  addingTimeForIdx.value = idx
+  const existing = duty.presetStartTimes || []
+  pendingTimeInput.value = existing[existing.length - 1] || duty.defaultStartTime || '11:20'
+}
+
+function cancelAddPresetTime() {
+  addingTimeForIdx.value = null
+}
+
+function confirmAddPresetTime(duty) {
+  if (pendingTimeInput.value) {
+    const next = normalizePresetStartTimes({
+      presetStartTimes: [...(duty.presetStartTimes || []), pendingTimeInput.value]
+    })
+    duty.presetStartTimes = next
+    duty.defaultStartTime = next[0] || ''
+  }
+  addingTimeForIdx.value = null
+}
+
+function removePresetTime(duty, timeVal) {
+  const next = (duty.presetStartTimes || []).filter(t => t !== timeVal)
+  duty.presetStartTimes = next
+  duty.defaultStartTime = next[0] || ''
+}
+
 function onAddDutyType() {
   form.value.dutyTypes.push({
     id: `duty-${Date.now()}`,
@@ -313,6 +394,7 @@ function onAddDutyType() {
     defaultDays: 5,
     defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     defaultStartTime: '11:20',
+    presetStartTimes: ['11:20'],
     isEmergency: false
   })
 }
@@ -356,6 +438,8 @@ async function onSave() {
         d.defaultWeekdays = []
       }
       d.defaultDays = d.defaultWeekdays.length
+      d.presetStartTimes = normalizePresetStartTimes(d)
+      d.defaultStartTime = d.presetStartTimes[0] || ''
     }
     await updateSettings(form.value)
     saveMessage.value = '✅ Duty settings saved successfully!'
@@ -438,16 +522,17 @@ async function onSave() {
 }
 
 .duty-settings__table th {
-  padding: 10px 14px;
+  padding: 10px 8px;
   background: var(--bg-secondary, #f2f2f7);
   color: var(--text-secondary);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .duty-settings__table td {
-  padding: 8px 12px;
+  padding: 8px 8px;
   border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
   vertical-align: middle;
 }
@@ -459,30 +544,127 @@ async function onSave() {
 .duty-settings__name-input {
   font-weight: 600;
   width: 100%;
+  padding: 7px 10px;
 }
 
 .duty-settings__mini-wrap {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .duty-settings__num-input {
-  width: 65px;
+  width: 54px;
   text-align: center;
+  padding: 7px 4px;
 }
 
 .duty-settings__mini-unit {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
 }
 
+.duty-settings__times-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.duty-settings__time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-secondary, #f2f2f7);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.duty-settings__time-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.duty-settings__time-chip-remove:hover {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+}
+
+.duty-settings__time-add-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.duty-settings__time-add-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light, rgba(70, 99, 172, 0.08));
+}
+
+.duty-settings__time-add-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .duty-settings__time-input {
-  width: 140px;
-  min-width: 135px;
-  padding: 8px 10px;
-  font-size: 0.88rem;
+  width: 112px;
+  padding: 4px 6px;
+  font-size: 0.8rem;
   box-sizing: border-box;
+}
+
+.duty-settings__time-confirm-btn,
+.duty-settings__time-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.duty-settings__time-confirm-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.duty-settings__time-cancel-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .duty-settings__checkbox-wrap {
@@ -517,7 +699,7 @@ async function onSave() {
 .duty-settings__days-cell {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
 }
 
@@ -534,10 +716,10 @@ async function onSave() {
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -6,7 +6,7 @@
  */
 
 import assert from 'node:assert'
-import { INITIAL_DUTY_SETTINGS } from './db/dutyService.js'
+import { INITIAL_DUTY_SETTINGS, normalizePresetStartTimes, formatDutyTime } from './db/dutyService.js'
 import {
   generateIcsContent,
   getOutlookWebComposeUrl,
@@ -524,6 +524,36 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
           assert.deepStrictEqual(calModal.getSelectedDays(), ['Wed'], 'Clicking specific calendar cell pre-fills that specific day')
 
           console.log('✅ Test 11 Passed: AddDutyModal no-day defaults and ad-hoc duty workflows verified.')
+        }
+
+        // Test 12: Multi-Preset Start Times & Formatting
+        {
+          // Deduplication, sorting, padding, and invalid filtering
+          const normalized = normalizePresetStartTimes({
+            presetStartTimes: ['11:20', '10:40', '11:00', '11:20', 'invalid', '25:00', '7:45']
+          })
+          assert.deepStrictEqual(normalized, ['07:45', '10:40', '11:00', '11:20'], 'Preset start times must normalize, deduplicate, and sort chronologically')
+
+          // Legacy fallback from defaultStartTime
+          const legacyFallback = normalizePresetStartTimes({ defaultStartTime: '08:15' })
+          assert.deepStrictEqual(legacyFallback, ['08:15'], 'Legacy duty without presetStartTimes must fall back to defaultStartTime')
+
+          // Empty preset times
+          const emptyPresets = normalizePresetStartTimes({ presetStartTimes: [], defaultStartTime: '08:15' })
+          assert.deepStrictEqual(emptyPresets, [], 'Explicit empty presetStartTimes array must remain empty')
+
+          // Display formatting
+          assert.strictEqual(formatDutyTime('07:45'), '7:45 AM')
+          assert.strictEqual(formatDutyTime('11:20'), '11:20 AM')
+          assert.strictEqual(formatDutyTime('14:15'), '2:15 PM')
+          assert.strictEqual(formatDutyTime(''), '')
+
+          // Initial duty settings all have presetStartTimes arrays
+          for (const d of INITIAL_DUTY_SETTINGS.dutyTypes) {
+            assert.ok(Array.isArray(d.presetStartTimes), `${d.name} must have presetStartTimes array`)
+          }
+
+          console.log('✅ Test 12 Passed: Multi-preset start times normalization and formatting verified.')
         }
 
         console.log('\n🎉 ALL DUTY TRACKER TESTS PASSED SUCCESSFULLY!\n')

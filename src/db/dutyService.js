@@ -9,24 +9,27 @@
 
 import { getDB } from './index.js'
 import { hasUnsyncedChanges } from './eventService.js'
+import { formatDutyTime, normalizePresetStartTimes } from '../utils/dutyTimeUtils.js'
+
+export { formatDutyTime, normalizePresetStartTimes }
 
 export const INITIAL_DUTY_SETTINGS = {
   allottedMinutes: 1875,
   emergencyCap: 2,
   dutyTypes: [
-    { id: 'am-bus', name: 'AM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '08:15', isEmergency: false },
-    { id: 'cafeteria', name: 'Cafeteria', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:20', isEmergency: false },
-    { id: 'library', name: 'Library', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:20', isEmergency: false },
-    { id: 'student-commons', name: 'Student Commons', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
-    { id: 'weight-room', name: 'Weight Room', defaultDuration: 30, defaultDays: 2, defaultStartTime: '11:25', defaultWeekdays: ['Tue', 'Thu'], isEmergency: false },
-    { id: 'halls-upstairs', name: 'Halls Upstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
-    { id: 'halls-downstairs', name: 'Halls Downstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
-    { id: 'flagpole', name: 'Flagpole', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '08:15', isEmergency: false },
-    { id: 'pm-bus', name: 'PM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '14:40', isEmergency: false },
-    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
-    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
-    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: true },
-    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', isEmergency: false }
+    { id: 'am-bus', name: 'AM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '07:45', presetStartTimes: ['07:45'], isEmergency: false },
+    { id: 'cafeteria', name: 'Cafeteria', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '10:40', presetStartTimes: ['10:40', '11:00', '11:20'], isEmergency: false },
+    { id: 'library', name: 'Library', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '10:40', presetStartTimes: ['10:40', '11:00', '11:20'], isEmergency: false },
+    { id: 'student-commons', name: 'Student Commons', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '10:40', presetStartTimes: ['10:40', '11:00', '11:20'], isEmergency: false },
+    { id: 'weight-room', name: 'Weight Room', defaultDuration: 30, defaultDays: 2, defaultStartTime: '11:00', presetStartTimes: ['11:00'], defaultWeekdays: ['Tue', 'Thu'], isEmergency: false },
+    { id: 'halls-upstairs', name: 'Halls Upstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '10:40', presetStartTimes: ['10:40', '11:00', '11:20'], isEmergency: false },
+    { id: 'halls-downstairs', name: 'Halls Downstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '10:40', presetStartTimes: ['10:40', '11:00', '11:20'], isEmergency: false },
+    { id: 'flagpole', name: 'Flagpole', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '14:15', presetStartTimes: ['14:15'], isEmergency: false },
+    { id: 'pm-bus', name: 'PM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '14:15', presetStartTimes: ['14:15'], isEmergency: false },
+    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', presetStartTimes: [], isEmergency: false },
+    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', presetStartTimes: [], isEmergency: false },
+    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', presetStartTimes: [], isEmergency: true },
+    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', presetStartTimes: [], isEmergency: false }
   ]
 }
 
@@ -52,10 +55,13 @@ export async function getDutySettings() {
           defaultDays = ['on-call', 'emergency', 'osslt', 'adjustment'].some(k => (d.id || '').includes(k) || (d.name || '').toLowerCase().includes(k)) ? 0 : 1
         }
       }
+      const presetStartTimes = normalizePresetStartTimes(d)
       return {
         ...d,
         defaultWeekdays,
-        defaultDays
+        defaultDays,
+        presetStartTimes,
+        defaultStartTime: presetStartTimes[0] || ''
       }
     })
 
@@ -76,10 +82,22 @@ export async function getDutySettings() {
 export async function saveDutySettings(newSettings) {
   const db = await getDB()
   const settings = (await db.get('settings', 'singleton')) || {}
+  const normalizedDutyTypes = Array.isArray(newSettings.dutyTypes)
+    ? newSettings.dutyTypes.map(d => {
+        const presetStartTimes = normalizePresetStartTimes(d)
+        return {
+          ...d,
+          presetStartTimes,
+          defaultStartTime: presetStartTimes[0] || ''
+        }
+      })
+    : INITIAL_DUTY_SETTINGS.dutyTypes
+  settings.dutyTypes = undefined // avoid accidental stray property
+  delete settings.dutyTypes
   settings.dutySettings = {
     allottedMinutes: Number(newSettings.allottedMinutes) || INITIAL_DUTY_SETTINGS.allottedMinutes,
     emergencyCap: Number(newSettings.emergencyCap) ?? INITIAL_DUTY_SETTINGS.emergencyCap,
-    dutyTypes: Array.isArray(newSettings.dutyTypes) ? newSettings.dutyTypes : INITIAL_DUTY_SETTINGS.dutyTypes
+    dutyTypes: normalizedDutyTypes
   }
   await db.put('settings', settings, 'singleton')
   hasUnsyncedChanges.value = true

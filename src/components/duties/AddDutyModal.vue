@@ -117,6 +117,23 @@
         </div>
       </div>
 
+      <!-- Preset Start Times -->
+      <div v-if="selectedDutyPresetTimes.length > 0" class="add-duty-form__preset-times">
+        <span class="add-duty-form__preset-label">Preset Times</span>
+        <div class="add-duty-form__preset-pills" role="group" aria-label="Preset start times">
+          <button
+            v-for="timeVal in selectedDutyPresetTimes"
+            :key="timeVal"
+            type="button"
+            class="add-duty-form__preset-pill"
+            :class="{ 'add-duty-form__preset-pill--active': form.startTime === timeVal }"
+            @click="selectPresetTime(timeVal)"
+          >
+            {{ formatDutyTime(timeVal) }}
+          </button>
+        </div>
+      </div>
+
       <!-- Total minutes pill -->
       <div class="add-duty-form__summary-pill">
         <span>Total Duty Time to Log:</span>
@@ -198,6 +215,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { CalendarCheck, CalendarDays, Check } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { useDutyTracker } from '../../composables/useDutyTracker.js'
+import { formatDutyTime, normalizePresetStartTimes } from '../../utils/dutyTimeUtils.js'
 import { downloadDutiesIcs, getWeekDaysList, getWeekRangeForDate } from '../../utils/dutyCalendarExport.js'
 
 const props = defineProps({
@@ -240,6 +258,16 @@ const weekRangeLabel = computed(() => {
   const range = getWeekRangeForDate(form.value.startDate)
   return range ? range.label : ''
 })
+
+const selectedDutyPresetTimes = computed(() => {
+  const catalog = dutySettings.value.dutyTypes || []
+  const found = catalog.find(d => (d.id || d.name) === selectedDutyId.value)
+  return found ? normalizePresetStartTimes(found) : []
+})
+
+function selectPresetTime(timeVal) {
+  form.value.startTime = timeVal
+}
 
 onMounted(() => {
   initDefaults()
@@ -350,9 +378,10 @@ function onStartDateChange() {
 }
 
 function applyDutyPreset(duty) {
+  const presets = normalizePresetStartTimes(duty)
   form.value.dutyName = duty.name
   form.value.duration = Number(duty.defaultDuration) || 15
-  form.value.startTime = duty.defaultStartTime || ''
+  form.value.startTime = presets[0] || ''
   form.value.location = duty.defaultLocation || ''
   form.value.isEmergency = Boolean(duty.isEmergency)
 
@@ -643,6 +672,55 @@ body.dark-theme .add-duty-form__day-pill--active {
 
 body.dark-theme .add-duty-form__day-pill--active .add-duty-form__day-date {
   color: #93c5fd;
+}
+
+.add-duty-form__preset-times {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -4px;
+}
+
+.add-duty-form__preset-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.add-duty-form__preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.add-duty-form__preset-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary, #f2f2f7);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-duty-form__preset-pill:hover {
+  border-color: var(--primary, #4663ac);
+  color: var(--primary, #4663ac);
+}
+
+.add-duty-form__preset-pill--active {
+  background: var(--primary, #4663ac);
+  border-color: var(--primary, #4663ac);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.add-duty-form__preset-pill--active:hover {
+  color: #ffffff;
 }
 
 .add-duty-form__footer {

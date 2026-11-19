@@ -55,6 +55,18 @@
           type="time"
           class="setup__input"
         />
+        <div v-if="matchingPresetTimes.length > 0" class="edit-duty-form__preset-pills" role="group" aria-label="Preset start times">
+          <button
+            v-for="timeVal in matchingPresetTimes"
+            :key="timeVal"
+            type="button"
+            class="edit-duty-form__preset-pill"
+            :class="{ 'edit-duty-form__preset-pill--active': form.startTime === timeVal }"
+            @click="form.startTime = timeVal"
+          >
+            {{ formatDutyTime(timeVal) }}
+          </button>
+        </div>
       </div>
 
       <div class="edit-duty-form__group">
@@ -134,11 +146,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Trash2 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { useDutyTracker } from '../../composables/useDutyTracker.js'
 import { useMessage } from '../../composables/useMessage.js'
+import { formatDutyTime, normalizePresetStartTimes } from '../../utils/dutyTimeUtils.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -147,7 +160,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'saved', 'deleted'])
 
-const { updateDuty, deleteDuty } = useDutyTracker()
+const { dutySettings, updateDuty, deleteDuty } = useDutyTracker()
 const { confirm } = useMessage()
 
 const isSaving = ref(false)
@@ -160,6 +173,14 @@ const form = ref({
   notes: '',
   isSnowDay: false,
   isEmergency: false
+})
+
+const matchingPresetTimes = computed(() => {
+  const name = (form.value.dutyName || '').trim().toLowerCase()
+  if (!name) return []
+  const catalog = dutySettings.value?.dutyTypes || []
+  const found = catalog.find(d => (d.name || '').trim().toLowerCase() === name)
+  return found ? normalizePresetStartTimes(found) : []
 })
 
 watch(() => props.duty, (val) => {
@@ -298,6 +319,40 @@ body.dark-theme .edit-duty-form__delete-btn:hover {
   background: rgba(239, 68, 68, 0.25);
   border-color: #f87171;
   color: #fca5a5;
+}
+
+.edit-duty-form__preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.edit-duty-form__preset-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary, #f2f2f7);
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-duty-form__preset-pill:hover {
+  border-color: var(--primary, #4663ac);
+  color: var(--primary, #4663ac);
+}
+
+.edit-duty-form__preset-pill--active {
+  background: var(--primary, #4663ac);
+  border-color: var(--primary, #4663ac);
+  color: #ffffff;
+}
+
+.edit-duty-form__preset-pill--active:hover {
+  color: #ffffff;
 }
 
 .edit-duty-form__footer-actions {
